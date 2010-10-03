@@ -1,18 +1,22 @@
-#! /usr/bin/python
+#!/usr/bin/env python
 
 """
-Name            : UEFfile.py
-Author          : David Boddie <david@boddie.net>
-Created         : Sun 02nd September 2001
-Last updated    : Mon 03rd September 2001
-Purpose         : Handle UEF archives.
-WWW             : http://www.david.boddie.net/Software/Python/UEFfile/
+UEFfile.py - Handle UEF archives.
 
-History:
+Copyright (c) 2001-2010, David Boddie <david@boddie.org.uk>
 
-0.10 (Mon 03rd September 2001)
-Adapted UEFtrans.py to create this file.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import exceptions, sys, string, os, gzip, types
@@ -174,7 +178,6 @@ class UEFfile:
         while size > 0:
             i = n % 256
             s = s + chr(i)
-    #       n = n / 256
             n = n >> 8
             size = size - 1
 
@@ -182,7 +185,7 @@ class UEFfile:
 
 
     def str2num(self, size, s):
-        """Convert a string of decimal digits to an integer."""
+        """Convert a string of ASCII characters to an integer."""
 
         i = 0
         n = 0
@@ -302,7 +305,6 @@ class UEFfile:
                         # contents list, but before doing so, find the next
                         # non-block chunk and mark that as the last chunk in
                         # the file
-    #                   current_file['last position'] = find_file_end(chunks, position)
         
                         if current_file != {}:
                             self.contents.append(current_file)
@@ -528,10 +530,6 @@ class UEFfile:
         while pos < len(self.chunks):
 
             pos, chunk = self.find_next_chunk(pos, [0x100, 0x102])
-
-    #       if self.chunks[pos][0] == 0x100 or chunks[pos][0] == 0x102:
-
-    #           if len(self.chunks[pos][1]) > 1:
 
             if pos == None:
 
@@ -761,11 +759,6 @@ class UEFfile:
 
             # Increment the block number
             block_number = block_number + 1
-
-
-        # Write some finishing bytes to the list of new chunks
-    #   new_chunks.append((0x110, self.number(2,0x0258)))
-    #   new_chunks.append((0x112, self.number(2,0x0258)))
 
         # Return the list of new chunks
         return new_chunks
@@ -1114,20 +1107,18 @@ class UEFfile:
 
         for c in self.chunks:
 
-                if n % 16 == 0:
-                        sys.stdout.write(string.rjust('%i: '% n, 8))
+            if n % 16 == 0:
+                sys.stdout.write(string.rjust('%i: '% n, 8))
+            
+            if chunks_symbols.has_key(c[0]):
+                sys.stdout.write(chunks_symbols[c[0]])
+            else:
+                # Unknown
+                sys.stdout.write('? ')
 
-                if chunks_symbols.has_key(c[0]):
+            if n % 16 == 15:
+                sys.stdout.write('\n')
 
-                    sys.stdout.write(chunks_symbols[c[0]])
-
-                else:
-                        # Unknown
-                        sys.stdout.write('? ')
-
-                if n % 16 == 15:
-                        sys.stdout.write('\n')
-
-                n = n + 1
+            n = n + 1
 
         print
