@@ -135,12 +135,15 @@ class UEFfile:
             self.read_contents()
 
 
-    def write(self, filename):
-        """write(filename)
-
+    def write(self, filename, write_creator_info = True,
+              write_machine_info = True, write_emulator_info = True):
+        """
         Write a UEF file containing all the information stored in an
-        instance of UEFfile.
+        instance of UEFfile to the file with the specified filename.
 
+        By default, information about the file's creator, target machine and
+        emulator is written to the file. These can be omitted by calling this
+        method with individual arguments set to False.
         """
 
         # Open the UEF file for writing
@@ -152,14 +155,17 @@ class UEFfile:
         # Write the UEF file header
         self.write_uef_header(uef)
 
-        # Write the UEF creator chunk to the file
-        self.write_uef_creator(uef)
+        if write_creator_info:
+            # Write the UEF creator chunk to the file
+            self.write_uef_creator(uef)
 
-        # Write the machine information
-        self.write_machine_info(uef)
+        if write_machine_info:
+            # Write the machine information
+            self.write_machine_info(uef)
 
-        # Write the emulator information
-        self.write_emulator_info(uef)
+        if write_emulator_info:
+            # Write the emulator information
+            self.write_emulator_info(uef)
     
         # Write the chunks to the file
         self.write_chunks(uef)
@@ -765,73 +771,71 @@ class UEFfile:
 
 
     def import_files(self, file_position, info):
-            """import_files(position, info)
+        """
+        Import a file into the UEF file at the specified location in the
+        list of contents.
+        positions is a positive integer or zero
 
-            Import a file into the UEF file at the specified location in the
-            list of contents.
-            positions is a positive integer or zero
+        To insert one file, info can be a sequence:
 
-            To insert one file, info can be a sequence:
+            info = (name, load, exe, data) where
+            name is the file's name.
+            load is the load address of the file.
+            exe is the execution address.
+            data is the contents of the file.
 
-                info = (name, load, exe, data) where
-                name is the file's name.
-                load is the load address of the file.
-                exe is the execution address.
-                data is the contents of the file.
+        For more than one file, info must be a sequence of info sequences.
+        """
 
-            For more than one file, info must be a sequence of info sequences.
-            """
+        if file_position < 0:
 
-            if file_position < 0:
-        
-                raise UEFfile_error, 'Position must be zero or greater.'
-        
-            # Find the chunk position which corresponds to the file_position
-            if self.contents != []:
-        
-                # There are files already present
-                if file_position >= len(self.contents):
-            
-                    # Position the new files after the end of the last file
-                    position = self.contents[-1]['last position'] + 1
-            
-                else:
-            
-                    # Position the new files before the end of the file
-                    # specified
-                    position = self.contents[file_position]['position']
+            raise UEFfile_error, 'Position must be zero or greater.'
+
+        # Find the chunk position which corresponds to the file_position
+        if self.contents != []:
+
+            # There are files already present
+            if file_position >= len(self.contents):
+
+                # Position the new files after the end of the last file
+                position = self.contents[-1]['last position'] + 1
+
             else:
-                # There are no files present in the archive, so put them after
-                # all the other chunks
-                position = len(self.chunks)
-    
-            # Examine the info sequence passed
-            if len(info) == 0:
-                return
 
-            if type(info[0]) == types.StringType:
+                # Position the new files before the end of the file
+                # specified
+                position = self.contents[file_position]['position']
+        else:
+            # There are no files present in the archive, so put them after
+            # all the other chunks
+            position = len(self.chunks)
 
-                # Assume that the info sequence contains name, load, exe, data
-                info = [info]
+        # Examine the info sequence passed
+        if len(info) == 0:
+            return
 
-            # Read the file details for each file and create chunks to add
-            # to the list of chunks
-            inserted_chunks = []
+        if type(info[0]) == types.StringType:
 
-            for name, load, exe, data in info:
+            # Assume that the info sequence contains name, load, exe, data
+            info = [info]
 
-                inserted_chunks = inserted_chunks + self.create_chunks(name, load, exe, data)
+        # Read the file details for each file and create chunks to add
+        # to the list of chunks
+        inserted_chunks = []
 
-            # Insert the chunks in the list at the specified position
-            self.chunks = self.chunks[:position] + inserted_chunks + self.chunks[position:]
+        for name, load, exe, data in info:
 
-            # Update the contents list
-            self.read_contents()
+            inserted_chunks = inserted_chunks + self.create_chunks(name, load, exe, data)
+
+        # Insert the chunks in the list at the specified position
+        self.chunks = self.chunks[:position] + inserted_chunks + self.chunks[position:]
+
+        # Update the contents list
+        self.read_contents()
 
 
     def chunk_number(self, name):
-        """number = chunk_number(name)
-        
+        """
         Returns the relevant chunk number for the name given.
         """
 
@@ -857,9 +861,8 @@ class UEFfile:
 
 
     def export_files(self, file_positions):
-        """info = export_files(positions)
-        
-        Given a file's location of the list of contents, return its name,
+        """
+        Given a file's location of the list of contents, returns its name,
         load and execution addresses, and the data contained in the file.
         If positions is an integer then return a tuple
 
@@ -895,8 +898,7 @@ class UEFfile:
 
 
     def chunk_name(self, number):
-        """name = chunk_name(number)
-        
+        """
         Returns the relevant chunk name for the number given.
         """
 
@@ -915,9 +917,8 @@ class UEFfile:
 
 
     def remove_files(self, file_positions):
-        """remove_file(positions)
-        
-        Remove files at the positions in the list of contents.
+        """
+        Removes files at the positions in the list of contents.
         positions is either an integer or a list of integers.
         """
         
@@ -968,7 +969,7 @@ class UEFfile:
     # Higher level functions ------------------------------
 
     def info(self):
-        """info()
+        """
         Provides general information on the target machine,
         keyboard layout, file creator and target emulator.
         """
@@ -997,7 +998,7 @@ class UEFfile:
         print
 
     def cat(self):
-        """cat()
+        """
         Prints a catalogue of the files stored in the UEF file.
         """
 
@@ -1031,8 +1032,7 @@ class UEFfile:
                 file_number = file_number + 1
 
     def show_chunks(self):
-        """show_chunks()
-
+        """
         Display the chunks in the UEF file in a table format
         with the following symbols denoting each type of
         chunk:
