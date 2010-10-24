@@ -353,16 +353,18 @@ if __name__ == '__main__':
     # of version 0.6
     n.minor = 6
 
-    # Copy the files before the executable into the new file
-    n.import_files(0, uef.export_files(range(0,f)))
+    # Copy the chunks before the executable into the new file
+    n.chunks += uef.chunks[:uef.contents[f]["position"]]
+
     # Add the new executable
     n.import_files(f, (name, load, exe, new_data))
-    # Copy the files after the executable into the new file
-    n.import_files(f+1, uef.export_files(range(f+1,len(uef.contents))))
+
+    # Copy the chunks after the executable into the new file
+    n.chunks += uef.chunks[uef.contents[f]["last position"]+1:]
 
     # Write the new executable
     try:
-        n.write(out_uef_file)
+        n.write(out_uef_file, write_emulator_info = False)
     except UEFfile_error:
         sys.stderr.write("Couldn't write the new executable to %s.\n" % out_uef_file)
         sys.exit(1)
