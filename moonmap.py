@@ -19,29 +19,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# History
-#
-# 0.10 (Sun 21st January 2001)
-# 
-# Initial version.
-# 
-# 0.11 (Tue 23rd January 2001)
-# 
-# Modified version of 0.10 which allows empty lines to denote no floor or ceiling.
-# 
-# 0.12 (Mon 13th August 2001)
-#
-# Tidied up multi-platform support.
-#
-# 0.13 (Thu 06th September 2001)
-#
-# Now patches the UEF file directly using UEFfile objects.
-#
-
-
 import os, string, sys, UEFfile
 
-version = '0.13 (Thu 06th September 2001)'
+version = '0.20'
+date = '2010-10-24'
 
 # Global variables
 

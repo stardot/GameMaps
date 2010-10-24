@@ -234,6 +234,10 @@ Tidied up multi-platform support.
 
 Now patches the UEF file directly using UEFfile objects.
 
+0.20 (2010-10-24)
+
+Preserves more chunks in the original UEF file.
+
 
 Contact address
 

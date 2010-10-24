@@ -34,7 +34,8 @@ if sys.platform == 'RISCOS':
 else:
     suffix = '.'
 
-version = '0.10 (Mon 03rd September 2001)'
+version = '0.20'
+date = '2010-10-24'
     
     
 class UEFfile:
