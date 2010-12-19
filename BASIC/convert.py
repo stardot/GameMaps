@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+import os, sys
 
 if len(sys.argv) != 2:
 
@@ -26,5 +26,9 @@ for line in lines:
 
 t = "\r".join(new_lines) + "\r"
 open(sys.argv[1], "w").write(t)
+file_name = os.path.split(sys.argv[1])[1]
+open(sys.argv[1]+".inf", "w").write(
+    "$.%s	ffff0e00	ffff802b	%x" % (file_name, len(t))
+    )
 
 sys.exit()

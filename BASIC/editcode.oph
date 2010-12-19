@@ -1,0 +1,63 @@
+.org $1900
+plot:
+        ldy #31
+loop:   lda ($70),y
+        sta ($72),y
+        dey
+        bpl loop
+        rts
+
+splittiles:
+        lda $70
+        and #$f0    ; right column
+        lsr
+        clc
+        lsr
+        clc
+        lsr
+        clc
+        lsr
+        clc
+        sta $71
+        lda $70
+        and #$0f    ; left column
+        sta $70
+        rts
+
+inittiles:
+        sta $70
+        lda #$6c
+        sta $71
+        lda #$80
+        sta $72
+        lda #$6e
+        sta $73
+        jsr plot
+        lda #$20
+        sta $70
+        lda #$6c
+        sta $71
+        lda #$a0
+        sta $72
+        lda #$6e
+        sta $73
+        jsr plot
+        lda #$00
+        sta $70
+        lda #$6c
+        sta $71
+        lda #$00
+        sta $72
+        lda #$70
+        sta $73
+        jsr plot
+        lda #$20
+        sta $70
+        lda #$6c
+        sta $71
+        lda #$20
+        sta $72
+        lda #$70
+        sta $73
+        jsr plot
+        rts
