@@ -129,9 +129,6 @@ class Maps:
     
     def export_html(self, f, level_number):
     
-        f.write("<html>\n<head>\n<title>Shark Levels</title>\n</head>\n")
-        f.write("<body>\n")
-        
         level = self.levels[level_number - 1]
         
         f.write('<table cellpadding="0" cellspacing="0">\n')
@@ -145,7 +142,6 @@ class Maps:
             f.write("</tr>\n")
         
         f.write("</table>\n")
-        f.write("</body>\n</html>\n")
 
 
 if __name__ == "__main__":
@@ -180,16 +176,22 @@ if __name__ == "__main__":
     # Write the images to files in the output directory.
     sprites.export_images(output_dir)
     
-    for level in range(3):
+    output_file = os.path.join(output_dir, "index.html")
     
-        level_name = "level-%i.html" % (level + 1)
-        output_file = os.path.join(output_dir, level_name)
+    try:
+        f = open(output_file, "w")
+        f.write("<html>\n<head>\n<title>Shark Levels</title>\n</head>\n")
+        f.write("<body>\n")
         
-        try:
-            f = open(output_file, "w")
+        for level in range(3):
+            f.write("\n\n<h2>Level %i</h2>\n" % (level + 1))
             maps.export_html(f, level + 1)
-            f.close()
         
-        except IOError:
-            sys.stderr.write("Failed to create HTML file: %s\n" % output_file)
-            sys.exit(1)
+        f.write("</body>\n</html>\n")
+        f.close()
+    
+    except IOError:
+        sys.stderr.write("Failed to create HTML file: %s\n" % output_file)
+        sys.exit(1)
+    
+    sys.exit()
