@@ -28,8 +28,8 @@ d   vine with ledge
 e   vine
 f   vertical branch
 
-Each byte describes two columns in the map with the low four bytes on the left
-and the high four bytes on the right. Each column is 12 tiles high.
+Each byte describes two columns in the map with the low four bits on the left
+and the high four bits on the right. Each column is 12 tiles high.
 
 The first level ends at 0x2fe8 and the second level starts at 0x2fe8.
 
@@ -52,7 +52,7 @@ d   window
 e   thin pipe junction
 f   thin horizontal pipe
 
-The second level ends at and the third level starts at 0x33f0.
+The second level ends at 0x33f0 and the third level starts at 0x33f0.
 
 Tiles:
 
