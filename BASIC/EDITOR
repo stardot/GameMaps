@@ -1,1 +1,85 @@
-5 MODE 210 VDU 23,1,0;0;0;0;15 VDU 28,0,30,19,2620 PROCinit25 PROCtake_data30 VDU 28,0,23,19,035 CLS40 level%=045 column%=050 r%=155 REPEAT60 IF r% PROCplotmap(level%, column%)65 r%=070 key%=GET75 IF key%=44 AND column%>0 THEN column%=column%-5:r%=180 IF key%=46 THEN column%=column%+5:r%=185 IF column%>76 THEN column%=7690 UNTIL FALSE95 END100105 DEF PROCinit110 CODE% = &1900115 OSCLI("LOAD EDITCODE "+STR$~(CODE%))120 plot%=CODE%125 splittiles%=CODE% + &0A130 inittiles%=CODE% + &1F135 ENDPROC140145 DEF PROCtake_data150 ADDR% = &3000155 OSCLI("LOAD CODE "+STR$~(ADDR%))160 CLS165 FOR A%=0 TO 31170 !&70=&4D00+(A%*32)175 !&72=&6C00+(A%*32)180 CALL plot%185 !&70=&5100+(A%*32)190 !&72=&7000+(A%*32)195 CALL plot%200 !&70=&3000+(A%*32)205 !&72=&7400+(A%*32)210 CALL plot%215 NEXT220 FOR A%=0 TO &810 STEP 32225 !&70=&5BE0+A%230 !&72=&77F0+A%235 CALL plot%240 NEXT245 FOR A%=&800 TO &810 STEP 2250 !(&77F0+A%)=!(&5BE0+A%)255 NEXT260 CALL inittiles%265 ENDPROC270275 DEF PROCplot(l%, n%, x%, y%)280 !&70=&6C00+(l%*&400)+(n%*64)285 !&72=&3000+(y%*&280)+(x%*32)290 CALL plot%295 !&70=&6C00+(l%*&400)+(n%*64)+32300 !&72=&3000+((y%+1)*&280)+(x%*32)305 CALL plot%310 ENDPROC315 DEF PROCplotmap(l%, c%)320 FOR X%=0 TO 9325 FOR Y%=0 TO 11330 ?&70=?(&77F0 + (l% * &408) + (c% + X%)*12 + Y%)335 CALL splittiles%340 left%=?&70345 right%=?&71350 !&70=&6C00 + (l% * &400) + (left% * &40)355 !&72=&3000 + (Y% * 2 * &280) + ((X% * 2) * &20)360 CALL plot%365 !&70=&6C00 + (l% * &400) + (left% * &40) + &20370 !&72=&3000 + (((Y% * 2) + 1) * &280) + ((X% * 2) * &20)375 CALL plot%380 !&70=&6C00 + (l% * &400) + (right% * &40)385 !&72=&3000 + (Y% * 2 * &280) + (((X% * 2) + 1) * &20)390 CALL plot%395 !&70=&6C00 + (l% * &400) + (right% * &40) + &20400 !&72=&3000 + (((Y% * 2) + 1) * &280) + (((X% * 2) + 1) * &20)405 CALL plot%410 NEXT415 NEXT420 ENDPROC
+AUTO
+MODE 2
+VDU 23,1,0;0;0;0;
+VDU 28,0,30,19,26
+PROCinit
+PROCtake_data
+VDU 28,0,23,19,0
+CLS
+level%=0
+column%=0
+r%=1
+REPEAT
+IF r% PROCplotmap(level%, column%)
+r%=0
+key%=GET
+IF key%=44 AND column%>0 THEN column%=column%-5:r%=1
+IF key%=46 THEN column%=column%+5:r%=1
+IF column%>76 THEN column%=76
+UNTIL FALSE
+END
+
+DEF PROCinit
+CODE% = &1900
+OSCLI("LOAD EDITCODE "+STR$~(CODE%))
+plot%=CODE%
+splittiles%=CODE% + &0A
+inittiles%=CODE% + &1F
+ENDPROC
+
+DEF PROCtake_data
+ADDR% = &3000
+OSCLI("LOAD CODE "+STR$~(ADDR%))
+CLS
+FOR A%=0 TO 31
+!&70=&4D00+(A%*32)
+!&72=&6C00+(A%*32)
+CALL plot%
+!&70=&5100+(A%*32)
+!&72=&7000+(A%*32)
+CALL plot%
+!&70=&3000+(A%*32)
+!&72=&7400+(A%*32)
+CALL plot%
+NEXT
+FOR A%=0 TO &810 STEP 32
+!&70=&5BE0+A%
+!&72=&23E8+A%
+CALL plot%
+NEXT
+FOR A%=&800 TO &810 STEP 2
+!(&23E8+A%)=!(&5BE0+A%)
+NEXT
+CALL inittiles%
+ENDPROC
+
+DEF PROCplot(l%, n%, x%, y%)
+!&70=&6C00+(l%*&400)+(n%*64)
+!&72=&3000+(y%*&280)+(x%*32)
+CALL plot%
+!&70=&6C00+(l%*&400)+(n%*64)+32
+!&72=&3000+((y%+1)*&280)+(x%*32)
+CALL plot%
+ENDPROC
+DEF PROCplotmap(l%, c%)
+FOR X%=0 TO 9
+FOR Y%=0 TO 11
+?&70=?(&23E8 + (l% * &408) + (c% + X%)*12 + Y%)
+CALL splittiles%
+left%=?&70
+right%=?&71
+!&70=&6C00 + (l% * &400) + (left% * &40)
+!&72=&3000 + (Y% * 2 * &280) + ((X% * 2) * &20)
+CALL plot%
+!&70=&6C00 + (l% * &400) + (left% * &40) + &20
+!&72=&3000 + (((Y% * 2) + 1) * &280) + ((X% * 2) * &20)
+CALL plot%
+!&70=&6C00 + (l% * &400) + (right% * &40)
+!&72=&3000 + (Y% * 2 * &280) + (((X% * 2) + 1) * &20)
+CALL plot%
+!&70=&6C00 + (l% * &400) + (right% * &40) + &20
+!&72=&3000 + (((Y% * 2) + 1) * &280) + (((X% * 2) + 1) * &20)
+CALL plot%
+NEXT
+NEXT
+ENDPROC
