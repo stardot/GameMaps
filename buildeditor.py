@@ -55,8 +55,8 @@ if __name__ == "__main__":
     
     files = []
     
-    system("ophis BASIC/editcode.oph BASIC/EDITCODE")
-    files.append(("EDITCODE", 0x1900, 0x1900, open("BASIC/EDITCODE").read()))
+    system("ophis BASIC/editcode.oph BASIC/EDCODE")
+    files.append(("EDCODE", 0x1900, 0x1900, open("BASIC/EDCODE").read()))
     
     t = read_basic("BASIC/EDITOR")
     files.append(("EDITOR", 0xffff0e00, 0xffff802b, open("BASIC/EDITOR").read()))
