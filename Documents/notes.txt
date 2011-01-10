@@ -76,3 +76,6 @@ f   wall with top-left part missing
 The game runs in mode 2. Sprite data for level 3 starts at 0x0000 and continues
 until 0x400. Sprite data for level 1 starts at 0x1d00 and continues until
 0x2100. Sprite data for level 2 starts at 0x2100 and continues until 0x2500.
+
+Note that tile 3 (ground) is used to generate soldiers and must be placed at
+the bottom-right of each screen if soldiers are to be generated.

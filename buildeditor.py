@@ -59,7 +59,13 @@ if __name__ == "__main__":
     files.append(("EDCODE", 0x1900, 0x1900, open("BASIC/EDCODE").read()))
     
     t = read_basic("BASIC/EDITOR")
-    files.append(("EDITOR", 0xffff0e00, 0xffff802b, open("BASIC/EDITOR").read()))
+    files.append(("EDITOR", 0xffff0e00, 0xffff802b, t))
+    
+    t = read_basic("BASIC/MKBOOT")
+    files.append(("MKBOOT", 0xffff0e00, 0xffff802b, t))
+    
+    t = read_basic("BASIC/MENU")
+    files.append(("MENU", 0xffff0e00, 0xffff802b, t))
     
     u = UEFfile.UEFfile(creator = 'SharkMap buildeditor.py '+version)
     u.minor = 6

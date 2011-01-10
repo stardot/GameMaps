@@ -195,3 +195,32 @@ eorplot64:
         jsr eorplot
 
         rts
+
+wipelevel:
+        ; $70,$71=level address
+        lda $70
+        adc #$08
+        sta $72
+        lda $71
+        adc #$04
+        sta $73
+        ldy #0
+
+wipeloop:
+        lda #0
+        sta ($70),Y
+        lda $70
+        adc #1
+        sta $70
+        lda $71
+        adc #0
+        sta $71
+
+        lda $71
+        cmp $73
+        bne wipeloop
+        lda $70
+        cmp $72
+        bne wipeloop
+
+        rts
