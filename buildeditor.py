@@ -67,6 +67,9 @@ if __name__ == "__main__":
     t = read_basic("BASIC/MKBOOT")
     files.append(("MKBOOT", 0xffff0e00, 0xffff802b, t))
     
+    t = read_basic("BASIC/MKBBCBOOT")
+    files.append(("MKBBCBOOT", 0xffff0e00, 0xffff802b, t))
+    
     t = read_basic("BASIC/MENU")
     files.append(("MENU", 0xffff0e00, 0xffff802b, t))
     
