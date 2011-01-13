@@ -224,3 +224,44 @@ wipeloop:
         bne wipeloop
 
         rts
+
+transform:
+
+        ldy #0
+transformloop:
+
+        ldx #7
+transformloop1:
+        lda ($70),y
+        sta ($72),y
+        iny
+        dex
+        bpl transformloop1
+
+        lda $72
+        adc #24
+        sta $72
+        lda $73
+        adc #0
+        sta $73
+
+        ldx #7
+transformloop2:
+        lda ($70),y
+        sta ($72),y
+        iny
+        dex
+        bpl transformloop2
+
+        lda $72
+        sec
+        sbc #32
+        sta $72
+        lda $73
+        sbc #0
+        sta $73
+
+        cpy #64
+        bmi transformloop
+
+        rts
