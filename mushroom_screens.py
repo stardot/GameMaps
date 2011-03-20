@@ -92,14 +92,20 @@ class Maps:
                 
                 j += 1
             
-            title = map_data[(i * 0xf0) + j:(i * 0xf0) + j + 20].strip()
+            title = ""
+            for c in map_data[(i * 0xf0) + j:(i * 0xf0) + j + 20]:
+                if 32 <= ord(c) <= 122:
+                    title += c
+            
             self.levels.append((title, level))
     
     def export_html(self, f, level_number):
     
         title, level = self.levels[level_number - 1]
         
-        f.write('<table cellpadding="0" cellspacing="0">\n')
+        f.write('<table cellpadding="0" cellspacing="0" style="margin-bottom: 1.0em">\n')
+        f.write('<tr><td align="center" colspan="20" style="font-weight: bold; font-size: 1.5em; padding-bottom: 0.25em">%s</td></tr>\n' % title)
+        
         for row in level:
         
             f.write("<tr>")
@@ -127,7 +133,7 @@ if __name__ == "__main__":
     # Read the Magic Mushrooms UEF file.
     try:
         uef = UEFfile.UEFfile(mm_uef_file)
-    except UEFfile_error:
+    except UEFfile.UEFfile_error:
         sys.stderr.write("Couldn't open %s\n" % mm_uef_file)
         sys.exit(1)
     
@@ -150,7 +156,7 @@ if __name__ == "__main__":
     # Read the map UEF file.
     try:
         uef = UEFfile.UEFfile(map_uef_file)
-    except UEFfile_error:
+    except UEFfile.UEFfile_error:
         sys.stderr.write("Couldn't open %s\n" % map_uef_file)
         sys.exit(1)
     
@@ -192,11 +198,21 @@ if __name__ == "__main__":
         f = open(output_file, "w")
         f.write("<html>\n<head>\n<title>Magic Mushrooms Levels</title>\n</head>\n")
         f.write("<body>\n")
+        f.write('<table>\n')
         
         for level in range(9):
-            f.write("\n\n<h2>%s</h2>\n" % maps.levels[level][0])
-            maps.export_html(f, level + 1)
         
+            if level % 3 == 0:
+                f.write('<tr>\n')
+            
+            f.write('<td>\n')
+            maps.export_html(f, level + 1)
+            f.write("</td>\n")
+            
+            if level % 3 == 2:
+                f.write("</tr>\n")
+        
+        f.write("</table>\n")
         f.write("</body>\n</html>\n")
         f.close()
     
