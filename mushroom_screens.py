@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Copyright (C) 2010 David Boddie <david@boddie.org.uk>
+Copyright (C) 2011 David Boddie <david@boddie.org.uk>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
