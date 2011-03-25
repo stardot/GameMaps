@@ -17,6 +17,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# The format for screens should be obvious to anyone familiar with the in-game
+# designer. However, the page at http://equ.in/ox/comp/magimush/ contains a
+# description of the format and also contains information about the location
+# within the game's executable of the default set of screens.
+
 import os, sys
 import Image
 import UEFfile
