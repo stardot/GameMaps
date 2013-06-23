@@ -176,7 +176,10 @@ class BoneCruncher:
         for number, offset in sprite_table.items():
         
             if offset is None:
-                sprites[number] = "\x00" * self.tile_width * self.tile_height
+                if number != 0x6f:
+                    sprites[number] = "\x00" * self.tile_width * self.tile_height
+                else:
+                    sprites[number] = sprites[7].replace("\x03", "\x01")
                 continue
             
             sprite = []
