@@ -1,0 +1,15 @@
+Each level map is stored in a file, from "DECKB" to "DECKT" except for the
+first level, which is stored at the start of the "Prog2" file.
+
+The levels in separate files are scrambled using a counter that starts with a
+value of 1 and increases for each byte read, wrapping around after 255 to 0.
+The counter value is combined with each byte from the file using an EOR
+operation.
+
+It is difficult to modify the game by creating a new UEF file because the
+UEFfile module does not preserve the block headers in data chunks from the
+original Icarus.uef file when it writes extracted files to a new UEF file.
+The "Game" and "Icarus" files are locked, and the "Game" file appears to rely
+on a value stored in the "next address" block header. Applying an EOR 0xa5
+operation to the file unscrambles it, but how this is obtained from the header,
+and whether the locked bit influences that process is unknown.
