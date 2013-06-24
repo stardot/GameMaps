@@ -20,7 +20,7 @@ tile_map = {
  0x02: "[$",    # vending machine
  0x0b: "##",    # beam
  0x20: "M ",    # monster
- 0x46: "L ",    # lift (monster)
+ 0x46: "L ",    # lift (for monsters)
  0x63: "[]",    # crate
  0x64: "{}",    # destructable block
  0x65: "{}",
@@ -69,7 +69,7 @@ tile_map = {
  0xf8: "--",    # door (horizontal, left of door label)
  0xf9: "Ar",    # armour
  0xfa: "Pw",    # power (gun)
- 0xfb: "Sp",    # reload speen
+ 0xfb: "Sp",    # reload speed
  0xfe: ". ",    # credit
  0xfd: "Ex",    # exit
     }
