@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 
-import sys
+"""
+readmaps.py - Read Firetrack maps from a UEF file and write them to a text file.
+
+Copyright (C) 2010 David Boddie <david@boddie.org.uk>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+import StringIO, sys
+import UEFfile
 
 class Maps:
 
@@ -86,20 +106,27 @@ if __name__ == "__main__":
 
     if len(sys.argv) != 3:
     
-        sys.stderr.write("Usage: %s <Firetrack map file> <output file>\n" % sys.argv[0])
+        sys.stderr.write("Usage: %s <Firetrack UEF file> <output file>\n" % sys.argv[0])
         sys.exit(1)
     
-    map_file = sys.argv[1]
+    uef_file = sys.argv[1]
     output_file = sys.argv[2]
     
     try:
-        f = open(map_file)
+        u = UEFfile.UEFfile(uef_file)
+        for details in u.contents:
+            if details["name"] == "5":
+                break
+        else:
+            raise IOError
+        
+        f = StringIO.StringIO(details["data"])
         maps = Maps()
         maps.read_maps(f)
         f.close()
     
-    except IOError:
-        sys.stderr.write("Failed to read map file: %s\n" % map_file)
+    except (IOError, UEFfile_error):
+        sys.stderr.write("Failed to read UEF file: %s\n" % uef_file)
         sys.exit(1)
     
     try:
