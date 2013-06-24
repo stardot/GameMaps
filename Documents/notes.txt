@@ -2,9 +2,10 @@ Level data is found in the "BONE_2" file at around 0x2500 by examining the
 comparable data in four additional files containing maps: "SCREEN 1",
 "SCREEN 2", "SCREEN 3" and "SCREEN 4".
 
-Each row appears to be 41 half bytes in length with each four bits representing a
+Each row is at least 20 bytes in length, with each four bits representing a
 tile in the map, the lower four bits appearing on the left and the upper four
-bits on the right.
+bits on the right. Each special tile requires an additional half byte, so
+rows with special tiles are longer than 20 bytes in length.
 
 Tile definitions:
 
