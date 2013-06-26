@@ -183,3 +183,28 @@ Each look-up table is also followed by 8 bytes before the level data begins.
 The file "2" appears to contain title graphics.
 The file "3" appears to contain alien attack formation data.
 The file "4" appears to contain sprite data.
+
+The sprite data is not laid out in a straightforward manner. Loading it into
+a MODE 5 screen doesn't reveal any obvious patterns. However, blanking out
+spans of it using null bytes causes parts of sprites to be blanked out in
+the game.
+
+Erasing the bottom-right half-rows of the red tile with green border sprite
+involves writing null bytes to the following bytes of data in the "4" file:
+
+  -40 bottom row
+ -104 row above
+ ...
+ -40 - (7 * 64) top row of bottom-right quadrant
+
+Originally, spans of null bytes were written to establish approximately where
+sprite definitions were located in the file.
+
+Continuing to write null bytes in steps of 64 bytes from the offsets
+overwritten here causes the bottom-left quadrant to be erased (8 more rows),
+then the top-right quadrant, then the top-left quadrant. It seems that each
+tile is 32 bytes in size, yet the split screen effect compresses the rows
+together, effectively increasing the resolution of the display in the game
+area.
+
+
