@@ -23,37 +23,7 @@ import os, sys
 import Image
 import UEFfile
 
-def read_columns(byte):
-
-    columns = []
-    byte = ord(byte)
-    for i in range(4):
-
-        v = (byte & 0x01) | ((byte & 0x10) >> 3)
-        byte = byte >> 1
-        columns.append(v)
-
-    columns.reverse()
-    return "".join(map(chr, columns))
-
-def read_sprites(data):
-
-    sprites = []
-    start = 3072 - (64 * 32)
-    
-    for sprite in range(64):
-    
-        spr = []
-        for r in range(0, 32, 8):
-            spr.append([])
-            for row in range(r, r+8):
-                spr[-1].append(read_columns(data[start + sprite + (row * 64)]))
-        
-        top = "".join(map(lambda row: "".join(row), zip(spr[0], spr[1])))
-        bottom = "".join(map(lambda row: "".join(row), zip(spr[2], spr[3])))
-        sprites.append(top + bottom)
-    
-    return sprites
+from Firetrack.sprites import Reader
 
 if __name__ == "__main__":
 
@@ -76,7 +46,8 @@ if __name__ == "__main__":
         else:
             raise IOError
         
-        sprites = read_sprites(details["data"])
+        reader = Reader(details["data"])
+        sprites = reader.read_sprites()
     
     except (IOError, UEFfile.UEFfile_error):
         sys.stderr.write("Failed to read UEF file: %s\n" % uef_file)

@@ -22,68 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import StringIO, sys
 import UEFfile
 
-class Maps:
+from Firetrack import maps
 
-    def __init__(self):
-    
-        self.levels = []
-        self.tables = []
-    
-    def read_maps(self, f):
-    
-        while True:
-        
-            a = f.read(1)
-            if not a:
-                break
-            
-            b, c = f.read(1), f.read(1)
-            
-            table = []
-            for i in range(8):
-                table.append(ord(f.read(1)))
-            
-            self.tables.append(table)
-            
-            d = f.read(8)
-            level = []
-            line = []
-            
-            while True:
-            
-                n = ord(f.read(1))
-                if n == 0x80:
-                    break
-                
-                if n & 0x80 != 0:
-                
-                    # Span
-                    count = (n >> 3) & 0x0f
-                    value = table[n & 0x07]
-                    line += [value] * count
-                
-                elif n & 0x40 != 0:
-                
-                    # Two byte span
-                    value = n & 0x3f
-                    count = ord(f.read(1))
-                    line += [value] * count
-                
-                else:
-                    line.append(n)
-                
-                while len(line) >= 20:
-                
-                    piece, line = line[:20], line[20:]
-                    level.append(piece)
-            
-            if line:
-                if len(line) < 20:
-                    line += (20 - len(line)) * 0
-                level.append(line)
-            
-            self.levels.append(level)
-    
+class Maps(maps.Maps):
+
     def export_text(self, f):
     
         levels = self.levels[:]
@@ -100,7 +42,6 @@ class Maps:
                 f.write("\n")
             
             f.write("\n")
-
 
 if __name__ == "__main__":
 
@@ -120,10 +61,8 @@ if __name__ == "__main__":
         else:
             raise IOError
         
-        f = StringIO.StringIO(details["data"])
-        maps = Maps()
-        maps.read_maps(f)
-        f.close()
+        maps = Maps(details["data"])
+        maps.read_maps()
     
     except (IOError, UEFfile_error):
         sys.stderr.write("Failed to read UEF file: %s\n" % uef_file)

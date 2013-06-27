@@ -202,9 +202,5 @@ sprite definitions were located in the file.
 
 Continuing to write null bytes in steps of 64 bytes from the offsets
 overwritten here causes the bottom-left quadrant to be erased (8 more rows),
-then the top-right quadrant, then the top-left quadrant. It seems that each
-tile is 32 bytes in size, yet the split screen effect compresses the rows
-together, effectively increasing the resolution of the display in the game
-area.
-
-
+then the top-right quadrant, then the top-left quadrant. Each tile is 32 bytes
+in size.
