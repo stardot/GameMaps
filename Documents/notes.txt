@@ -1,0 +1,31 @@
+Sprites are stored in the DATA file.
+Level maps are stored in the DAT2 file.
+
+Sprites
+-------
+
+
+
+Levels
+------
+
+Maps are 64 rows deep by 64 columns wide with 4 bits per tile, with each
+column from left to right stored in the file as a sequence of 32 bytes.
+So the first set of bytes from 0x100 to 0x120 represent the first column,
+0x120 to 0x140 the second, and so on.
+The lower 4 bits in each byte represent the upper tile in a pair of tiles; the
+upper 4 bits represent the lower tile.
+
+Objects are stored in the part of the file from 0x00 to 0xff. Each object is
+described by three bytes containing the column (from left), row (from bottom)
+and type of object. The type is interpreted using the following table:
+
+ 0: key 0       x, y
+ 1: scroll      x, y or n, 255
+ 2: pickaxe
+ 3: 
+ 4: 
+ 5: 
+ 6: key 2       x, y
+ 7: key 1       x, y
+ 8: crucifix    x, y
