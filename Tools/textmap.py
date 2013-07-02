@@ -111,7 +111,7 @@ if __name__ == "__main__":
         
         for column in range(64):
         
-            drow = 61 - row
+            drow = 63 - row
             dcolumn = column - 3
             if (drow, dcolumn) in special:
                 type = special[(drow, dcolumn)]

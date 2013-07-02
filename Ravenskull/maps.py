@@ -21,7 +21,7 @@ import StringIO
 
 class Maps:
 
-    offsets = [0x120, 0x900, 0x10e0, 0x18c0]
+    offsets = [(0x11f, 0x11f, 0x91f), (0x8ff, 0x8ff, 0x10bf), (0x10df, 0x10df, 0x189f), (0x18df, 0x207f, 0x209f)]
     
     def __init__(self, data):
     
@@ -49,6 +49,7 @@ class Maps:
             n += 1
             if n == 12:
                 level += 1
+                print map(hex, map(ord, self.data[address:address + 4]))
                 address += 4
                 n = 0
         
@@ -56,7 +57,9 @@ class Maps:
         
         for level in range(4):
         
-            address = self.offsets[level]
+            start, address, end = self.offsets[level]
+            offset = address - start
+            length = end - start
             level = []
             
             for column in range(64):
@@ -65,7 +68,8 @@ class Maps:
                 
                 for row_pair in range(32):
                 
-                    byte = ord(self.data[address + (column * 32) + row_pair])
+                    i = start + (offset + (column * 32) + row_pair) % length
+                    byte = ord(self.data[i])
                     upper = byte & 0x0f
                     lower = byte >> 4
                     level[-1] += [upper, lower]

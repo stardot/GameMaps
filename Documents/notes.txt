@@ -2,12 +2,12 @@ Sprites are stored in the DATA file.
 Level maps are stored in the DAT2 file.
 
 Sprites
--------
+=======
 
 
 
 Levels
-------
+======
 
 Maps are 64 rows deep by 64 columns wide with 4 bits per tile, with each
 column from left to right stored in the file as a sequence of 32 bytes.
@@ -16,16 +16,97 @@ So the first set of bytes from 0x100 to 0x120 represent the first column,
 The lower 4 bits in each byte represent the upper tile in a pair of tiles; the
 upper 4 bits represent the lower tile.
 
+    0x0: " ",   # space
+    0x1: "~",   # water/wall
+    0x2: "#",   # wall
+    0x3: "X",   # spiked gate
+    0x4: "O",   # round wall/column
+    0x5: "+",   # sarcophagus
+    0x6: "\\",  # upper-right wall
+    0x7: "/",   # upper-left wall
+    0x8: "\\",  # lower-left wall
+    0x9: "/",   # lower-right wall
+    0xa: "|",   # door
+    0xb: "%",   # brick wall
+    0xc: "x",   # acid pool
+    0xd: "@",   # green wall
+    0xe: "*",   # decorative wall
+    0xf: "$",   # treasure
+
 Objects are stored in the part of the file from 0x00 to 0xff. Each object is
 described by three bytes containing the column (from left), row (from bottom)
 and type of object. The type is interpreted using the following table:
 
- 0: key 0       x, y
- 1: scroll      x, y or n, 255
- 2: pickaxe
- 3: 
- 4: 
- 5: 
- 6: key 2       x, y
- 7: key 1       x, y
- 8: crucifix    x, y
+    0x0: "gold key",
+    0x1: "scroll",
+    0x2: "pickaxe",
+    0x3: "detonator",
+    0x4: "dynamite",
+    0x5: "spade",
+    0x6: "rusty key",
+    0x7: "silver key",
+    0x8: "upper-left crucifix",
+    0x9: "lower-left crucifix",
+    0xa: "lower-right crucifix",
+    0xb: "upper-right crucifix",
+    0xc: "potion",
+    0xd: "scythe",
+    0xe: "fish",
+    0xf: "wine",
+    0x10: "fine bone",
+    0x11: "empty glass",
+    0x12: "compass",
+    0x13: "hand-axe",
+    0x14: "cake",
+    0x15: "bell",
+    0x16: "bow & arrow"
+
+The rest of the file contains map data. It appears to be protected by a
+checksum that uses EOR to verify that the data is unmodified. Transposing two
+bytes in this part of the file or modifying two identical bytes to have the
+same new value has the result of producing a checksum value (found by applying
+EOR to all the bytes) that will be the same as before.
+
+Giving a zero value to the bytes from 0x100 to 0x120 causes the top-left tile
+in the map to be blank. This implies that the level data actually starts at
+0x11f.
+
+
+Checksum
+--------
+
+The start of the MAIN file contains the following code:
+
+ldy #0      ; A0 00
+sty $27e    ; 8C 7E 02
+sty $70     ; 84 70     ; $70=0
+lda #$38    ; A9 38
+sta $71     ; 85 71     ; $71=$38 (start at 0x3800)
+loop:
+eor ($70),y ; 51 70     ; EOR A with (0x3800 + y) noting that A is initially $38
+iny         ; C8
+bne loop    ; D0 FB (-5)
+inc $71     ; E6 71
+ldx $71     ; A6 71
+cpx #$58    ; E0 58
+bne loop    ; D0 F3 (-13)
+cmp #$4e    ; C9 4E
+beq continue; F0 01
+rts         ; 60        ; fail
+jmp $11dc   ; 20 DC 11
+
+So, the data in the DAT2 file after the first 0x100 bytes must be combined
+using the EOR operator, starting with a value of 0x38, and the result is
+compared against a value of 0x4e. If it doesn't match then the game exits.
+
+Level names
+-----------
+
+Level names are defined in the MAIN file at 0x1984 with each string defined as
+a length byte followed by the corresponding number of characters.
+
+Object names
+------------
+
+Names are define in the MAIN file at 0x1364 and are separated by "Z"
+characters.
