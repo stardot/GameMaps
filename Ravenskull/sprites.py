@@ -25,8 +25,24 @@ import os, sys
 # bottom-right 8 byte pieces of each sprite. For the blank piece, I just chose
 # a blank area in the file data.
 
-sprite_table = {
-    }
+r = 0x140
+c = 0x10
+
+sprite_table = [
+    (3*r, 3*r, 3*r, 3*r, 3*r, 3*r, 3*r, 3*r, 3*r),
+    (4*r + 8*c, 4*r + 9*c + 8, 4*r + 11*c,
+     4*r + 8*c + 8, 4*r + 10*c, 4*r + 11*c + 8,
+     4*r + 9*c, 4*r + 10*c + 8, 4*r + 12*c),
+    (4*r + 12*c + 8, 4*r + 14*c, 4*r + 15*c + 8,
+     4*r + 13*c, 4*r + 14*c + 8, 4*r + 16*c,
+     4*r + 13*c + 8, 4*r + 15*c, 4*r + 16*c + 8),
+    (4*r + 17*c, 4*r + 18*c + 5, 4*r + 20*c + 8,
+     4*r + 17*c + 8, 4*r + 19*c, 4*r + 20*c,
+     4*r + 18*c, 4*r + 19*c + 8, 4*r + 21*c),
+    (4*r + 21*c + 8, 4*r + 23*c, 4*r + 24*c + 8,
+     4*r + 22*c, 4*r + 23*c + 8, 4*r + 25*c,
+     4*r + 22*c + 5, 4*r + 24*c, 4*r + 25*c + 8),
+    ]
 
 class Reader:
 
@@ -57,3 +73,26 @@ class Reader:
         
         columns.reverse()
         return "".join(map(chr, columns))
+    
+    def read_sprites(self):
+    
+        sprites = {}
+        
+        for number in range(len(sprite_table)):
+        
+            sprite = []
+            for row in range(3):
+            
+                columns = []
+                for column in range(3):
+                
+                    offset = sprite_table[number][row * 3 + column]
+                    columns.append(self.read_sprite(offset))
+                
+                for line in zip(*columns):
+                    sprite.append("".join(line))
+            
+            sprite = "".join(sprite)
+            sprites[number] = sprite
+        
+        return sprites

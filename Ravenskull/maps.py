@@ -21,7 +21,7 @@ import StringIO
 
 class Maps:
 
-    offsets = [(0x11f, 0x11f, 0x91f), (0x8ff, 0x8ff, 0x10bf), (0x10df, 0x10df, 0x189f), (0x18df, 0x207f, 0x209f)]
+    offsets = [(0x11f, 3, 0x17f, 0x8df), (0xff, 2, 0x93f, 0x8df), (0x11f, 3, 0x113f, 0x8df), (0x11f, 3, 0x191f, 0x8df)]
     
     def __init__(self, data):
     
@@ -57,9 +57,9 @@ class Maps:
         
         for level in range(4):
         
-            start, address, end = self.offsets[level]
-            offset = address - start
-            length = end - start
+            start, number, middle, end = self.offsets[level]
+            offset = start
+            right_margin = 64 - (5 - number)
             level = []
             
             for column in range(64):
@@ -68,7 +68,13 @@ class Maps:
                 
                 for row_pair in range(32):
                 
-                    i = start + (offset + (column * 32) + row_pair) % length
+                    if 0 <= column < number:
+                        i = start + (column * 32) + row_pair
+                    elif 3 <= column < right_margin:
+                        i = middle + ((column - number) * 32) + row_pair
+                    else:
+                        i = end + ((column - right_margin) * 32) + row_pair
+                    
                     byte = ord(self.data[i])
                     upper = byte & 0x0f
                     lower = byte >> 4

@@ -32,7 +32,7 @@ class IncorrectSize(Exception):
 
 class Ravenskull:
 
-    tile_width = 16
+    tile_width = 12
     tile_height = 24
     
     def __init__(self, uef_file):

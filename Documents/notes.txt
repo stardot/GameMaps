@@ -4,7 +4,7 @@ Level maps are stored in the DAT2 file.
 Sprites
 =======
 
-
+Tile sprites are 16 by 24 pixels, so 0x60 bytes in length.
 
 Levels
 ======
