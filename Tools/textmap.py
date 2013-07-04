@@ -23,11 +23,11 @@ import sys
 from Ravenskull import IncorrectSize, NotFound, Ravenskull
 
 chars = {
-    0x0: " ",
-    0x1: "~",
-    0x2: "#",
+    0x0: " ",   # blank
+    0x1: "~",   # moat
+    0x2: "#",   # wall
     0x3: "X",   # spiked gate
-    0x4: "O",
+    0x4: "O",   # column
     0x5: "+",   # sarcophagus
     0x6: "\\",  # upper-right wall
     0x7: "/",   # upper-left wall

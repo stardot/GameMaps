@@ -29,20 +29,25 @@ r = 0x140
 c = 0x10
 
 sprite_table = [
-    (3*r, 3*r, 3*r, 3*r, 3*r, 3*r, 3*r, 3*r, 3*r),
-    (4*r + 8*c, 4*r + 9*c + 8, 4*r + 11*c,
-     4*r + 8*c + 8, 4*r + 10*c, 4*r + 11*c + 8,
-     4*r + 9*c, 4*r + 10*c + 8, 4*r + 12*c),
-    (4*r + 12*c + 8, 4*r + 14*c, 4*r + 15*c + 8,
-     4*r + 13*c, 4*r + 14*c + 8, 4*r + 16*c,
-     4*r + 13*c + 8, 4*r + 15*c, 4*r + 16*c + 8),
-    (4*r + 17*c, 4*r + 18*c + 5, 4*r + 20*c + 8,
-     4*r + 17*c + 8, 4*r + 19*c, 4*r + 20*c,
-     4*r + 18*c, 4*r + 19*c + 8, 4*r + 21*c),
-    (4*r + 21*c + 8, 4*r + 23*c, 4*r + 24*c + 8,
-     4*r + 22*c, 4*r + 23*c + 8, 4*r + 25*c,
-     4*r + 22*c + 5, 4*r + 24*c, 4*r + 25*c + 8),
+    None,           # blank
+    0x48,           # moat
+    0x90,           # wall
+    13*0x48 - 8,    # spiked gate, 18*0x48 - 8 (spiked column)
+    14*0x48 - 8,    # column, 23*0x48 - 8 (barrel)
+    17*0x48 - 8,    # sarcophagus
+    3*0x48,         # upper-right wall
+    6*0x48,         # upper-left wall
+    5*0x48,         # lower-left wall
+    4*0x48,         # lower-right wall
+    24*0x48 - 8,    # door
+    10*0x48 - 8,    # brick wall, 19*0x48 - 8 (earth)
+    7*0x48,         # acid pool, 21*0x48 - 8 (plant)
+    15*0x48 - 8,   # green wall, 16*0x48 - 8 (square wall)
+    12*0x48 - 8,   # decorative wall, 22*0x48 - 8 (striped wall)
+    11*0x48 - 8,   # treasure
     ]
+
+# 20*0x48 - 8 (unknown)
 
 class Reader:
 
@@ -77,16 +82,22 @@ class Reader:
     def read_sprites(self):
     
         sprites = {}
+        base = 4*r + 3*c + 8
         
         for number in range(len(sprite_table)):
         
             sprite = []
+            address = sprite_table[number]
+            if address is None:
+                sprites[number] = 12*24*"\x00"
+                continue
+            
             for row in range(3):
             
                 columns = []
                 for column in range(3):
                 
-                    offset = sprite_table[number][row * 3 + column]
+                    offset = base + address + (column * 24) + (row * 8)
                     columns.append(self.read_sprite(offset))
                 
                 for line in zip(*columns):
