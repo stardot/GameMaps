@@ -29,22 +29,22 @@ r = 0x140
 c = 0x10
 
 sprite_table = [
-    None,           # blank
-    0x48,           # moat
-    0x90,           # wall
-    13*0x48 - 8,    # spiked gate, 18*0x48 - 8 (spiked column)
-    14*0x48 - 8,    # column, 23*0x48 - 8 (barrel)
+    None,           # blank, blank, blank
+    0x48,           # moat, wall, striped wall
+    0x90,           # wall, 22*0x48 - 8 (striped wall)
+    13*0x48 - 8,    # spiked gate, 18*0x48 - 8 (spiked column), spiked gate
+    14*0x48 - 8,    # column, 16*0x48 - 8 (square wall)
     17*0x48 - 8,    # sarcophagus
     3*0x48,         # upper-right wall
     6*0x48,         # upper-left wall
     5*0x48,         # lower-left wall
     4*0x48,         # lower-right wall
     24*0x48 - 8,    # door
-    10*0x48 - 8,    # brick wall, 19*0x48 - 8 (earth)
+    10*0x48 - 8,    # brick wall, 23*0x48 - 8 (barrel)
     7*0x48,         # acid pool, 21*0x48 - 8 (plant)
-    15*0x48 - 8,   # green wall, 16*0x48 - 8 (square wall)
-    12*0x48 - 8,   # decorative wall, 22*0x48 - 8 (striped wall)
-    11*0x48 - 8,   # treasure
+    15*0x48 - 8,    # green wall
+    12*0x48 - 8,    # decorative wall, 19*0x48 - 8 (earth)
+    11*0x48 - 8,    # treasure
     ]
 
 # 20*0x48 - 8 (unknown)

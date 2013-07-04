@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-editor.py - A BoneCruncher level editor.
+editor.py - A Ravenskull level editor.
 
 Copyright (C) 2013 David Boddie <david@boddie.org.uk>
 
@@ -24,7 +24,7 @@ import os, sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from BoneCruncher import BoneCruncher
+from Ravenskull import Ravenskull
 import UEFfile
 
 __version__ = "0.1"
@@ -43,10 +43,11 @@ class LevelWidget(QWidget):
         self.xs = 2
         self.ys = 1
         
-        self.rows = 25
-        self.columns = 40
+        self.rows = 64
+        self.columns = 64
         
         self.levels = []
+        self.items = []
         self.level_number = 1
         self.currentTile = 0
         self.highlight = None
@@ -80,7 +81,7 @@ class LevelWidget(QWidget):
     
     def loadLevels(self):
     
-        self.levels = self.game_info.read_levels()
+        self.levels, self.items = self.game_info.read_levels()
     
     def setTileImages(self, tile_images):
     
@@ -149,6 +150,12 @@ class LevelWidget(QWidget):
                 
                 painter.drawImage(c * self.tw * self.xs, r * self.th * self.ys,
                                   tile_image)
+                
+                if (63 - r, c - 3) in self.items[self.level_number - 1]:
+                    painter.drawLine(c * self.tw * self.xs, r * self.th * self.ys,
+                                     (c + 1) * self.tw * self.xs, (r + 1) * self.th * self.ys)
+                    painter.drawLine(c * self.tw * self.xs, (r + 1) * self.th * self.ys,
+                                     (c + 1) * self.tw * self.xs, r * self.th * self.ys)
         
         painter.end()
     
@@ -235,7 +242,7 @@ class EditorWindow(QMainWindow):
         self.game_info.write_levels(self.levelWidget.levels)
         
         # Write the new UEF file.
-        u = UEFfile.UEFfile(creator = 'BoneCruncher Editor ' + __version__)
+        u = UEFfile.UEFfile(creator = 'Ravenskull Editor ' + __version__)
         u.minor = 6
         u.target_machine = "Electron"
         
@@ -254,7 +261,7 @@ class EditorWindow(QMainWindow):
     
         self.tileGroup = QActionGroup(self)
         
-        collection = [range(0, 16) + [0x1f, 0x2f, 0x3f, 0x4f, 0x5f, 0x6f]]
+        collection = [range(0, 16)]
         toolbar_areas = [Qt.TopToolBarArea]
         titles = [self.tr("Tiles")]
         
@@ -351,7 +358,7 @@ if __name__ == "__main__":
         app.quit()
         sys.exit(1)
     
-    game_info = BoneCruncher(app.arguments()[1])
+    game_info = Ravenskull(app.arguments()[1])
     
     window = EditorWindow(game_info)
     window.show()
