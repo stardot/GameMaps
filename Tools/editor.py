@@ -153,9 +153,9 @@ class LevelWidget(QWidget):
                 
                 if (63 - r, c - 3) in self.items[self.level_number - 1]:
                     painter.drawLine(c * self.tw * self.xs, r * self.th * self.ys,
-                                     (c + 1) * self.tw * self.xs, (r + 1) * self.th * self.ys)
-                    painter.drawLine(c * self.tw * self.xs, (r + 1) * self.th * self.ys,
-                                     (c + 1) * self.tw * self.xs, r * self.th * self.ys)
+                                     (c + 1) * self.tw * self.xs - 1, (r + 1) * self.th * self.ys - 1)
+                    painter.drawLine(c * self.tw * self.xs, (r + 1) * self.th * self.ys - 1,
+                                     (c + 1) * self.tw * self.xs - 1, r * self.th * self.ys)
         
         painter.end()
     

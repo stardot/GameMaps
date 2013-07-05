@@ -29,25 +29,29 @@ r = 0x140
 c = 0x10
 
 sprite_table = [
-    None,           # blank, blank, blank
-    0x48,           # moat, wall, striped wall
+    None,           # blank
+    0x48,           # moat, wall, striped wall, wall
     0x90,           # wall, 22*0x48 - 8 (striped wall)
-    13*0x48 - 8,    # spiked gate, 18*0x48 - 8 (spiked column), spiked gate
-    14*0x48 - 8,    # column, 16*0x48 - 8 (square wall)
+    13*0x48 - 8,    # spiked gate, 18*0x48 - 8 (spiked column), spiked gate, spiked column
+    14*0x48 - 8,    # column, 16*0x48 - 8 (square wall), column, square wall
     17*0x48 - 8,    # sarcophagus
     3*0x48,         # upper-right wall
     6*0x48,         # upper-left wall
     5*0x48,         # lower-left wall
     4*0x48,         # lower-right wall
     24*0x48 - 8,    # door
-    10*0x48 - 8,    # brick wall, 23*0x48 - 8 (barrel)
-    7*0x48,         # acid pool, 21*0x48 - 8 (plant)
+    10*0x48 - 8,    # brick wall, 23*0x48 - 8 (barrel), brick wall, barrel
+    7*0x48,         # acid pool, 21*0x48 - 8 (plant), acid pool, plant
     15*0x48 - 8,    # green wall
-    12*0x48 - 8,    # decorative wall, 19*0x48 - 8 (earth)
+    12*0x48 - 8,    # decorative wall, 19*0x48 - 8 (earth), decorative wall, earth
     11*0x48 - 8,    # treasure
     ]
 
-# 20*0x48 - 8 (unknown)
+small_sprite_table = [
+    0,
+    20 + 0x3c,
+    20 + 64 + 2*0x3c
+    ]
 
 class Reader:
 
@@ -55,11 +59,11 @@ class Reader:
     
         self.data = data
     
-    def read_sprite(self, offset):
+    def read_sprite(self, offset, bytes = 8):
     
         rows = []
         
-        for i in range(8):
+        for i in range(bytes):
         
             byte = self.data[offset + i]
             rows.append(self.read_columns(byte))
@@ -92,18 +96,37 @@ class Reader:
                 sprites[number] = 12*24*"\x00"
                 continue
             
-            for row in range(3):
+            columns = []
+            for column in range(3):
             
-                columns = []
-                for column in range(3):
-                
-                    offset = base + address + (column * 24) + (row * 8)
-                    columns.append(self.read_sprite(offset))
-                
-                for line in zip(*columns):
-                    sprite.append("".join(line))
+                offset = base + address + (column * 24)
+                columns.append(self.read_sprite(offset, 24))
+            
+            for line in zip(*columns):
+                sprite.append("".join(line))
             
             sprite = "".join(sprite)
             sprites[number] = sprite
+        
+        small_number = number + 1
+        base = r + 4*c
+        
+        for number in range(len(small_sprite_table)):
+        
+            sprite = []
+            address = small_sprite_table[number]
+            
+            columns = []
+            for column in range(3):
+            
+                offset = base + address + (column * 20)
+                columns.append(self.read_sprite(offset, 20))
+            
+            for line in zip(*columns):
+                sprite.append("".join(line))
+            
+            sprite = ("\x00" * 24) + "".join(sprite) + ("\x00" * 24)
+            sprites[small_number] = sprite
+            small_number += 1
         
         return sprites
