@@ -31,23 +31,24 @@ __version__ = "0.1"
 
 class LevelWidget(QWidget):
 
-    def __init__(self, game_info, parent = None):
+    xs = 4
+    ys = 2
+    
+    def __init__(self, game_info = None, parent = None):
     
         QWidget.__init__(self, parent)
         
         self.game_info = game_info
         
-        self.tw = game_info.tile_width
-        self.th = game_info.tile_height
-        
-        self.xs = 4
-        self.ys = 2
+        self.tw = Firetrack.tile_width
+        self.th = Firetrack.tile_height
         
         self.rows = 0
         self.columns = 20
         
         self.levels = []
         self.level_number = 1
+        self.tile_images = {}
         self.currentTile = 0
         self.highlight = None
         
@@ -63,13 +64,16 @@ class LevelWidget(QWidget):
         
         self.setMouseTracking(True)
         
+        if game_info:
+            self.readInfo()
+    
+    def readInfo(self):
+    
         self.loadImages()
         self.loadLevels()
     
     def loadImages(self):
     
-        self.tile_images = {}
-        
         palette = map(lambda x: qRgb(*x), self.game_info.palette(self.level_number))
         
         number = 0
@@ -103,6 +107,12 @@ class LevelWidget(QWidget):
         self.adjustSize()
         self.update()
     
+    def saveImage(self, path):
+    
+        image = QImage(self.sizeHint(), QImage.Format_RGB16)
+        self.paint(image, QRect(QPoint(0, 0), image.size()))
+        return image.save(path)
+    
     def mousePressEvent(self, event):
     
         r = self._row_from_y(event.y())
@@ -129,37 +139,43 @@ class LevelWidget(QWidget):
     
     def paintEvent(self, event):
     
+        self.paint(self, event.rect())
+    
+    def paint(self, device, rect):
+    
         painter = QPainter()
-        painter.begin(self)
-        painter.fillRect(event.rect(), QBrush(Qt.black))
+        painter.begin(device)
+        painter.fillRect(rect, QBrush(Qt.black))
         
         painter.setPen(self.pen)
         
-        y1 = event.rect().top()
-        y2 = event.rect().bottom()
-        x1 = event.rect().left()
-        x2 = event.rect().right()
+        y1 = rect.top()
+        y2 = rect.bottom()
+        x1 = rect.left()
+        x2 = rect.right()
         
         r1 = min(max(0, self._row_from_y(y1)), self.rows - 1)
         r2 = min(max(0, self._row_from_y(y2)), self.rows - 1)
         c1 = self._column_from_x(x1)
         c2 = self._column_from_x(x2)
         
-        for r in range(r1, r2 + 1):
-            for c in range(c1, c2 + 1):
-            
-                tile = self.levels[self.level_number - 1][r][c]
-                tile_image = self.tile_images[tile]
-                
-                painter.drawImage(c * self.tw * self.xs, r * self.th * self.ys,
-                                  tile_image)
+        if self.rows > 0:
         
+            for r in range(r1, r2 + 1):
+                for c in range(c1, c2 + 1):
+                
+                    tile = self.levels[self.level_number - 1][r][c]
+                    tile_image = self.tile_images[tile]
+                    
+                    painter.drawImage(c * self.tw * self.xs,
+                                      r * self.th * self.ys,
+                                      tile_image)
         painter.end()
     
     def sizeHint(self):
     
         return QSize(self.columns * self.tw * self.xs,
-                     self.rows * self.th * self.ys)
+                     max(self.columns, self.rows) * self.th * self.ys)
     
     def _row_from_y(self, y):
     
@@ -193,33 +209,37 @@ class LevelWidget(QWidget):
 
 class EditorWindow(QMainWindow):
 
-    def __init__(self, game_info):
+    def __init__(self, game_info = None):
     
         QMainWindow.__init__(self)
         
-        self.xs = 4
-        self.ys = 2
-        
-        self.tw = game_info.tile_width
-        self.th = game_info.tile_height
-        
-        self.game_info = game_info
-        
         self.path = ""
         
-        self.levelWidget = LevelWidget(game_info)
+        area = QScrollArea()
+        self.setCentralWidget(area)
+        
+        self.loadLevels(game_info)
         
         self.createToolBars()
         self.createMenus()
-        
-        area = QScrollArea()
-        area.setWidget(self.levelWidget)
-        self.setCentralWidget(area)
-        
-        # Select the first tile in the tiles toolbar and the first level in the
-        # levels menu.
-        self.tileGroup.actions()[0].trigger()
-        self.levelsGroup.actions()[0].trigger()
+    
+    def openFile(self):
+    
+        path = QFileDialog.getOpenFileName(self, self.tr("Open File"),
+                                           self.path, self.tr("UEF files (*.uef)"))
+        if not path.isEmpty():
+            try:
+                game_info = Firetrack(unicode(path))
+                self.loadLevels(game_info)
+                
+                # Regenerate the symbols toolbar and levels menu.
+                self.addSymbolsToToolbar()
+                self.addLevelMenus()
+            
+            except:
+                QMessageBox.warning(self, self.tr("Open File"),
+                    self.tr("Couldn't read the UEF file '%1'.\n").arg(path))
+                raise
     
     def saveAs(self):
     
@@ -233,6 +253,22 @@ class EditorWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, self.tr("Save Levels"),
                     self.tr("Couldn't write the new executable to %1.\n").arg(path))
+    
+    def saveImageAs(self):
+    
+        path = QFileDialog.getSaveFileName(self, self.tr("Save Image As"),
+                                           self.path, self.tr("PNG files (*.png)"))
+        if not path.isEmpty():
+        
+            if not self.levelWidget.saveImage(unicode(path)):
+                QMessageBox.warning(self, self.tr("Save Image"),
+                    self.tr("Couldn't save the image '%1'.\n").arg(path))
+    
+    def loadLevels(self, game_info):
+    
+        self.game_info = game_info
+        self.levelWidget = LevelWidget(game_info)
+        self.centralWidget().setWidget(self.levelWidget)
     
     def saveLevels(self, path):
     
@@ -259,23 +295,30 @@ class EditorWindow(QMainWindow):
     
         self.tileGroup = QActionGroup(self)
         
-        collection = [range(0, 64)]
-        toolbar_areas = [Qt.TopToolBarArea]
-        titles = [self.tr("Tiles")]
+        self.tilesToolBar = QToolBar(self.tr("Tiles"))
+        self.addToolBar(Qt.TopToolBarArea, self.tilesToolBar)
+        self.addSymbolsToToolbar()
+    
+    def addSymbolsToToolbar(self):
+    
+        for action in self.tileGroup.actions():
+            self.tileGroup.removeAction(action)
+            self.tilesToolBar.removeAction(action)
         
-        for symbols, area, title in zip(collection, toolbar_areas, titles):
+        symbols = self.levelWidget.tile_images.keys()
+        symbols.sort()
         
-            tilesToolBar = QToolBar(title)
-            self.addToolBar(area, tilesToolBar)
-            
-            for symbol in symbols:
-            
-                icon = QIcon(QPixmap.fromImage(self.levelWidget.tile_images[symbol]))
-                action = tilesToolBar.addAction(icon, str(symbol))
-                action.setData(QVariant(symbol))
-                action.setCheckable(True)
-                self.tileGroup.addAction(action)
-                action.triggered.connect(self.setCurrentTile)
+        for symbol in symbols:
+        
+            icon = QIcon(QPixmap.fromImage(self.levelWidget.tile_images[symbol]))
+            action = self.tilesToolBar.addAction(icon, str(symbol))
+            action.setData(QVariant(symbol))
+            action.setCheckable(True)
+            self.tileGroup.addAction(action)
+            action.triggered.connect(self.setCurrentTile)
+        
+        if self.tileGroup.actions():
+            self.tileGroup.actions()[0].trigger()
     
     def createMenus(self):
     
@@ -283,29 +326,49 @@ class EditorWindow(QMainWindow):
         
         newAction = fileMenu.addAction(self.tr("&New"))
         newAction.setShortcut(QKeySequence.New)
+        newAction.setEnabled(False)
         
-        saveAsAction = fileMenu.addAction(self.tr("Save &As..."))
-        saveAsAction.setShortcut(QKeySequence.SaveAs)
-        saveAsAction.triggered.connect(self.saveAs)
+        openAction = fileMenu.addAction(self.tr("&Open"))
+        openAction.setShortcut(QKeySequence.Open)
+        openAction.triggered.connect(self.openFile)
+        
+        self.saveAsAction = fileMenu.addAction(self.tr("Save &As..."))
+        self.saveAsAction.setShortcut(QKeySequence.SaveAs)
+        self.saveAsAction.triggered.connect(self.saveAs)
+        self.saveAsAction.setEnabled(False)
+        
+        self.saveImageAsAction = fileMenu.addAction(self.tr("Save Image &As..."))
+        self.saveImageAsAction.triggered.connect(self.saveImageAs)
+        self.saveImageAsAction.setEnabled(False)
         
         quitAction = fileMenu.addAction(self.tr("E&xit"))
         quitAction.setShortcut(self.tr("Ctrl+Q"))
         quitAction.triggered.connect(self.close)
         
         editMenu = self.menuBar().addMenu(self.tr("&Edit"))
-        clearAction = editMenu.addAction(self.tr("&Clear"))
-        clearAction.triggered.connect(self.clearLevel)
+        self.clearAction = editMenu.addAction(self.tr("&Clear"))
+        self.clearAction.triggered.connect(self.clearLevel)
+        self.clearAction.setEnabled(False)
         
-        levelsMenu = self.menuBar().addMenu(self.tr("&Levels"))
+        self.levelsMenu = self.menuBar().addMenu(self.tr("&Levels"))
+        self.levelsMenu.triggered.connect(self.selectLevel)
         self.levelsGroup = QActionGroup(self)
+        self.addLevelMenus()
+    
+    def addLevelMenus(self):
+    
+        for action in self.levelsGroup.actions():
+            self.levelsGroup.removeAction(action)
+            self.levelsMenu.removeAction(action)
         
         for i in range(len(self.levelWidget.levels)):
-            levelAction = levelsMenu.addAction(str(i + 1))
+            levelAction = self.levelsMenu.addAction(str(i + 1))
             levelAction.setData(QVariant(i + 1))
             levelAction.setCheckable(True)
             self.levelsGroup.addAction(levelAction)
         
-        levelsMenu.triggered.connect(self.selectLevel)
+        if self.levelsGroup.actions():
+            self.levelsGroup.actions()[0].trigger()
     
     def setCurrentTile(self):
     
@@ -316,6 +379,9 @@ class EditorWindow(QMainWindow):
         number = action.data().toInt()[0]
         self.levelWidget.highlight = None
         self.setLevel(number)
+        self.clearAction.setEnabled(True)
+        self.saveImageAsAction.setEnabled(True)
+        self.saveAsAction.setEnabled(True)
     
     def setLevel(self, number):
     
@@ -350,13 +416,10 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     
-    if len(app.arguments()) < 2:
-    
-        sys.stderr.write("Usage: %s <UEF file>\n" % app.arguments()[0])
-        app.quit()
-        sys.exit(1)
-    
-    game_info = Firetrack(app.arguments()[1])
+    if len(app.arguments()) > 1:
+        game_info = Firetrack(app.arguments()[1])
+    else:
+        game_info = None
     
     window = EditorWindow(game_info)
     window.show()
