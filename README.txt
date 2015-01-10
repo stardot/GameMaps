@@ -7,7 +7,7 @@ This depends on the cross-platform PyQt4 GUI framework. This tool is typically
 run from the command line from within the BoneCruncherMaps directory itself,
 like this:
 
-  ./tools/editor.py BoneCruncher.uef
+  PYTHONPATH=. ./tools/editor.py BoneCruncher.uef
 
 You will also need to provide a suitable BoneCruncher.uef file containing the
 files for the Acorn Electron version of BoneCruncher. This is not provided in
