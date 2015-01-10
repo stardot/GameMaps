@@ -7,7 +7,7 @@ This depends on the cross-platform PyQt4 GUI framework. This tool is typically
 run from the command line from within the FiretrackMaps directory itself,
 like this:
 
-  ./tools/editor.py Firetrack.uef
+  PYTHONPATH=. ./tools/editor.py Firetrack.uef
 
 You will also need to provide a suitable Firetrack.uef file containing the
 files for the Acorn Electron version of Firetrack. This is not provided in
