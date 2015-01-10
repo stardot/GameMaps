@@ -7,7 +7,7 @@ This depends on the cross-platform PyQt4 GUI framework. This tool is typically
 run from the command line from within the RavenskullMaps directory itself,
 like this:
 
-  ./Tools/editor.py Ravenskull_E.uef
+  PYTHONPATH=. ./Tools/editor.py Ravenskull_E.uef
 
 You will also need to provide a suitable Ravenskull_E.uef file containing the
 files for the Acorn Electron version of Ravenskull. This is not provided in
