@@ -16,3 +16,7 @@ level file.
 If there are more bits required to represent a block then there will be
 correspondingly more bytes required to represent a puzzle. For 4 bits per
 block, there will be 64 bits per piece and 168 bytes per puzzle.
+
+It turns out that there are 8 bits per block, so each block is 16 bytes.
+
+The puzzle pieces start at 0x3a5 in each level file.

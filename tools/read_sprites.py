@@ -171,10 +171,12 @@ def read_puzzle(data):
         
             for k in range(4):
             
-                if data[(i * 16) + (j * 4) + k] == "\x00":
-                    block[k] += " "
+                value = ord(data[(i * 16) + (j * 4) + k])
+                
+                if value == 0:
+                    block[k] += "  "
                 else:
-                    block[k] += "*"
+                    block[k] += "%02x" % value
         
         blocks.append(block)
     
@@ -183,11 +185,6 @@ def read_puzzle(data):
         for pieces in zip(*blocks[i*7:(i+1)*7]):
         
             print "".join(pieces)
-        
-            
-    #for block in blocks:
-    #    print "\n".join(map(lambda l: "".join(l), block))
-    #    print "----"
 
 
 if __name__ == "__main__":
@@ -214,9 +211,6 @@ if __name__ == "__main__":
     
     reader = Reader(details["data"][0xabd:])
     
-    read_puzzle(details["data"][0x3a5:])
-    sys.exit()
-    
     for key in reader.sprite_table.keys():
     
         sprite = reader.read_sprite(key)
@@ -224,5 +218,11 @@ if __name__ == "__main__":
         im = Image.fromstring("P", (16, 32), sprite)
         im.putpalette((0,0,0, 255,0,0, 0,255,0, 0,0,255))
         im.save(os.path.join(output_dir, "%02i.png" % key))
+    
+    for puzzle in range(5):
+        puzzle_start = 0x3a5 + (puzzle * 21 * 16)
+        puzzle_finish = 0x3a5 + ((puzzle + 1) * 21 * 16)
+        read_puzzle(details["data"][puzzle_start:puzzle_finish])
+        print
     
     sys.exit()
