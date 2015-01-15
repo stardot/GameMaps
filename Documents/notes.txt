@@ -3,6 +3,10 @@ Electron Version of Clogger
 
 The levels in the SLIPPER file start at 0xf7d. There are 5 levels per file.
 
+Each level consists of 32 by 32 tiles, stored using one byte per tile.
+Values 0x00 to 0x0f are ordinary scenery or collectable tiles, tiles 0x26 to
+0x2a are moveable objects, and tiles 0x10 to 0x24 are puzzle pieces.
+
 Loading the SLIPPER file at 0x5403 in order to align the graphics to rows on
 screen, it appears that the wall sprite starts at 0xabd.
 
@@ -20,3 +24,21 @@ block, there will be 64 bits per piece and 168 bytes per puzzle.
 It turns out that there are 8 bits per block, so each block is 16 bytes.
 
 The puzzle pieces start at 0x3a5 in each level file.
+
+The pieces are positioned from left to right and from top to bottom when
+arranged on screen, so the pieces as extracted from the level data are
+placed in the following arrangement in order to reconstruct the complete
+puzzle:
+
+  0  1  2  3  4  5  6
+  7  8  9  a  b  c  d
+  e  f 10 11 12 13 14
+
+Each piece is stored as a sequence of columns from left to right, with each
+column containing four elements. So the bytes in a piece need to be arranged
+in the following way when creating a sprite:
+
+  0 4 8 c
+  1 5 9 d
+  2 6 a e
+  3 7 b f
