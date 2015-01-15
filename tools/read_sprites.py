@@ -23,7 +23,7 @@ import os, sys
 import UEFfile
 import Image
 
-from Clogger.sprites import Reader, Puzzle
+from Clogger.sprites import Sprites, Puzzle
 
 if __name__ == "__main__":
 
@@ -47,11 +47,11 @@ if __name__ == "__main__":
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
     
-    reader = Reader(details["data"][0xabd:])
+    sprites = Sprites(details["data"][0xabd:])
     
-    for key in reader.sprite_table.keys():
+    for key in sprites.sprite_table.keys():
     
-        sprite = reader.read_sprite(key)
+        sprite = sprites.read_sprite(key)
         
         im = Image.fromstring("P", (16, 32), sprite)
         im.putpalette((0,0,0, 255,0,0, 0,255,0, 0,0,255))

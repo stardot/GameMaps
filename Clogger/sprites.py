@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
 
-class Reader:
+class Sprites:
 
     # Offsets into the sprite data for the 8 byte pieces of each sprite.
     # For the blank piece, I just chose a blank area in the file data.
@@ -111,6 +111,9 @@ class Reader:
                0x3c0, 0x1e8, 0x208, 0x3c0)
         }
     
+    tile_width = 16
+    tile_height = 32
+    
     def __init__(self, data):
     
         self.data = data
@@ -155,7 +158,7 @@ class Reader:
         return "".join(map(chr, columns))
 
 
-class Puzzle(Reader):
+class Puzzle(Sprites):
 
     blocks = {
         0x00: 0xabd + 0x3c0,    # black
