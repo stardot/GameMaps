@@ -81,6 +81,7 @@ class LevelWidget(QWidget):
     def loadLevels(self):
     
         self.levels = self.game_info.read_levels()
+        self.passwords = self.game_info.read_passwords()
     
     def setTileImages(self, tile_images):
     
@@ -271,6 +272,18 @@ class EditorWindow(QMainWindow):
                 action.setCheckable(True)
                 self.tileGroup.addAction(action)
                 action.triggered.connect(self.setCurrentTile)
+        
+        # Add a level toolbar with a password widget.
+        levelToolBar = QToolBar(self.tr("Levels"))
+        self.addToolBar(area, levelToolBar)
+        passwordLabel = QLabel(self.tr("&Password:"))
+        levelToolBar.addWidget(passwordLabel)
+        
+        self.passwordEdit = QLineEdit()
+        self.passwordEdit.setReadOnly(True)
+        levelToolBar.addWidget(self.passwordEdit)
+        
+        passwordLabel.setBuddy(self.passwordEdit)
     
     def createMenus(self):
     
@@ -310,6 +323,12 @@ class EditorWindow(QMainWindow):
     
         number = action.data().toInt()[0]
         self.levelWidget.highlight = None
+        if number > 6:
+            password_number = number - 7
+        else:
+            password_number = number - 1
+        
+        self.passwordEdit.setText(self.levelWidget.passwords[password_number % 24])
         self.setLevel(number)
     
     def setLevel(self, number):

@@ -197,6 +197,29 @@ class BoneCruncher:
         
         return sprites
     
+    def read_passwords(self):
+    
+        p = 0x24ff
+        passwords = []
+        current = ""
+        while len(passwords) < 24 and p >= 0x2408:
+        
+            c = self.data["BONE_2"][p]
+            if c == "\xff":
+                if current != "":
+                    passwords.append(current)
+                    current = ""
+            elif c == "\x00":
+                pass
+            elif c == "\x40":
+                current = " " + current
+            else:
+                current = chr(min(ord(c) + 55, 0xff)) + current
+            
+            p -= 1
+        
+        return passwords
+    
     def palette(self, level):
     
         return [(0,0,0), (255,0,0), (0,255,0), (255,255,255)]
