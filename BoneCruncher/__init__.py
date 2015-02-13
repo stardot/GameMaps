@@ -199,26 +199,68 @@ class BoneCruncher:
     
     def read_passwords(self):
     
-        p = 0x24ff
+        p = 0x2408
         passwords = []
         current = ""
-        while len(passwords) < 24 and p >= 0x2408:
+        while len(passwords) < 24 and p < 0x2500:
         
             c = self.data["BONE_2"][p]
             if c == "\xff":
                 if current != "":
-                    passwords.append(current)
+                    passwords.insert(0, current)
                     current = ""
             elif c == "\x00":
                 pass
             elif c == "\x40":
                 current = " " + current
             else:
-                current = chr(min(ord(c) + 55, 0xff)) + current
+                current += chr(min(ord(c) + 55, 0xff))
             
-            p -= 1
+            p += 1
         
         return passwords
+    
+    def write_passwords(self, passwords):
+    
+        rev = passwords[:]
+        rev.reverse()
+        
+        data = "\xff"
+        
+        for password in rev:
+        
+            converted = ""
+            
+            for c in password:
+            
+                # If we already have 12 characters then abort.
+                if len(converted) == 12:
+                    break
+                
+                i = ord(c)
+                
+                if i == 32:
+                    converted += "\x40"
+                elif ord("A") <= i <= ord("Z"):
+                    converted += chr(i - 55)
+                else:
+                    # Abort on invalid characters.
+                    break
+            else:
+                data += converted
+            
+            data += "\xff"
+        
+        if len(data) < 0xf8:
+            # Pad the data to the expected length.
+            data += "\x00" * (0xf8 - len(data))
+        else:
+            # Truncate the data if necessary.
+            data = data[:0xf8]
+        
+        file_number = self.files["BONE_2"]
+        old_data = self.uef.contents[file_number]["data"]
+        self.uef.contents[file_number]["data"] = old_data[:0x2408] + data + old_data[0x2500:]
     
     def palette(self, level):
     

@@ -234,6 +234,7 @@ class EditorWindow(QMainWindow):
     
         # Write the levels back to the UEF file.
         self.game_info.write_levels(self.levelWidget.levels)
+        self.game_info.write_passwords(self.levelWidget.passwords)
         
         # Write the new UEF file.
         u = UEFfile.UEFfile(creator = 'BoneCruncher Editor ' + __version__)
@@ -280,7 +281,9 @@ class EditorWindow(QMainWindow):
         levelToolBar.addWidget(passwordLabel)
         
         self.passwordEdit = QLineEdit()
-        self.passwordEdit.setReadOnly(True)
+        self.passwordEdit.setMaxLength(12)
+        self.passwordEdit.setValidator(QRegExpValidator(QRegExp("[A-Z ]+"), self))
+        self.passwordEdit.textChanged.connect(self.updatePassword)
         levelToolBar.addWidget(self.passwordEdit)
         
         passwordLabel.setBuddy(self.passwordEdit)
@@ -349,6 +352,10 @@ class EditorWindow(QMainWindow):
         
         if answer == QMessageBox.Yes:
             self.levelWidget.clearLevel()
+    
+    def updatePassword(self, text):
+    
+        self.levelWidget.passwords[self.levelWidget.level_number - 1] = str(text)
     
     def sizeHint(self):
     
