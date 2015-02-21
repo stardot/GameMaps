@@ -34,8 +34,8 @@ if sys.platform == 'RISCOS':
 else:
     suffix = '.'
 
-version = '0.20'
-date = '2010-10-24'
+version = '0.21'
+date = '2013-03-03'
     
     
 class UEFfile:
@@ -771,11 +771,13 @@ class UEFfile:
         return new_chunks
 
 
-    def import_files(self, file_position, info):
+    def import_files(self, file_position, info, gap = False):
         """
-        Import a file into the UEF file at the specified location in the
-        list of contents.
-        positions is a positive integer or zero
+        Import a file, or series of files, into the UEF file at the specified
+        file position in the list of contents. Each file will be preceded by
+        a gap, if enabled.
+        
+        file_position is a positive integer or zero
 
         To insert one file, info can be a sequence:
 
@@ -826,7 +828,12 @@ class UEFfile:
 
         for name, load, exe, data in info:
 
-            inserted_chunks = inserted_chunks + self.create_chunks(name, load, exe, data)
+            if gap:
+                inserted_chunks += [(0x112, "\xdc\x05"),
+                                    (0x110, "\xdc\x05"),
+                                    (0x100, "\xdc")]
+            
+            inserted_chunks += self.create_chunks(name, load, exe, data)
 
         # Insert the chunks in the list at the specified position
         self.chunks = self.chunks[:position] + inserted_chunks + self.chunks[position:]
@@ -863,7 +870,7 @@ class UEFfile:
 
     def export_files(self, file_positions):
         """
-        Given a file's location in the list of contents, returns its name,
+        Given a file's location of the list of contents, returns its name,
         load and execution addresses, and the data contained in the file.
         If positions is an integer then return a tuple
 

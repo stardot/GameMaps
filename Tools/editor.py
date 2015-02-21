@@ -381,7 +381,7 @@ class EditorWindow(QMainWindow):
         self.setLevel(number)
         self.clearAction.setEnabled(True)
         self.saveImageAsAction.setEnabled(True)
-        self.saveAsAction.setEnabled(True)
+        #self.saveAsAction.setEnabled(True)
     
     def setLevel(self, number):
     
