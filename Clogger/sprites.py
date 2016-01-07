@@ -175,6 +175,12 @@ class Puzzle(Sprites):
         0x4f: 0xabd + 0x270
         }
     
+    columns = 7
+    rows = 3
+    
+    block_width = 4
+    block_height = 8
+    
     def __init__(self, data):
     
         self.data = data

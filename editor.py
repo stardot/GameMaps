@@ -29,29 +29,17 @@ import UEFfile
 from Clogger.levels import Levels
 from Clogger.sprites import Sprites, Puzzle
 
-__version__ = "0.1"
+__version__ = "0.2"
 
-class LevelWidget(QWidget):
+class EditorWidget(QWidget):
 
-    def __init__(self, levels, sprites, puzzle, parent = None):
+    xs = 2
+    ys = 1
+    
+    def __init__(self, parent = None):
     
         QWidget.__init__(self, parent)
         
-        self.levels_obj = levels
-        self.sprites = sprites
-        self.puzzle = puzzle
-        
-        self.tw = self.sprites.tile_width
-        self.th = self.sprites.tile_height
-        
-        self.xs = 2
-        self.ys = 1
-        
-        self.rows = self.levels_obj.width
-        self.columns = self.levels_obj.height
-        
-        self.levels = []
-        self.level_number = 1
         self.currentTile = 0
         self.highlight = None
         
@@ -66,59 +54,6 @@ class LevelWidget(QWidget):
         self.pen.setCapStyle(Qt.RoundCap)
         
         self.setMouseTracking(True)
-        
-        self.loadImages()
-        self.loadLevels()
-    
-    def loadImages(self):
-    
-        self.tile_images = {}
-        
-        palette = map(lambda x: qRgb(*x), self.levels_obj.palette(self.level_number - 1))
-        
-        for number in self.sprites.sprite_table.keys():
-        
-            sprite = self.sprites.read_sprite(number)
-            
-            image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
-            image.setColorTable(palette)
-            self.tile_images[number] = image
-        
-        for number in range(21):
-        
-            sprite = self.puzzle.read_sprite(self.level_number - 1, number)
-            
-            image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
-            image.setColorTable(palette)
-            self.tile_images[number + 0x10] = image
-    
-    def loadLevels(self):
-    
-        self.levels = map(self.levels_obj.read, range(5))
-    
-    def setTileImages(self, tile_images):
-    
-        self.tile_images = tile_images
-    
-    def clearLevel(self):
-    
-        for row in range(self.rows):
-            for column in range(self.columns):
-                self.writeTile(column, row, self.currentTile)
-    
-    def setLevel(self, number):
-    
-        self.level_number = number
-        self.loadLevels()
-        self.loadImages()
-        
-        self.update()
-    
-    def saveImage(self, path):
-    
-        image = QImage(self.sizeHint(), QImage.Format_RGB16)
-        self.paint(image, QRect(QPoint(0, 0), image.size()))
-        return image.save(path)
     
     def mousePressEvent(self, event):
     
@@ -169,14 +104,24 @@ class LevelWidget(QWidget):
         for r in range(r1, r2 + 1):
             for c in range(c1, c2 + 1):
             
-                tile = self.levels[self.level_number - 1][r][c]
+                tile_image = self.readTile(c, r)
                 
-                if tile != 255:
-                    tile_image = self.tile_images[tile]
+                if tile_image:
                     painter.drawImage(c * self.tw * self.xs, r * self.th * self.ys,
                                       tile_image)
         
         painter.end()
+    
+    def saveImage(self, path):
+    
+        image = QImage(self.sizeHint(), QImage.Format_RGB16)
+        self.paint(image, QRect(QPoint(0, 0), image.size()))
+        return image.save(path)
+    
+    def updateCell(self, c, r):
+    
+        self.update(QRect(self._x_from_column(c), self._y_from_row(r),
+              self.tw * self.xs, self.th * self.ys))
     
     def sizeHint(self):
     
@@ -197,11 +142,160 @@ class LevelWidget(QWidget):
     def _x_from_column(self, c):
     
         return c * self.tw * self.xs
+
+
+class LevelWidget(EditorWidget):
+
+    tw = Sprites.tile_width
+    th = Sprites.tile_height
+        
+    rows = Levels.width
+    columns = Levels.height
     
-    def updateCell(self, c, r):
+    def __init__(self, levels, sprites, puzzle, parent = None):
     
-        self.update(QRect(self._x_from_column(c), self._y_from_row(r),
-              self.tw * self.xs, self.th * self.ys))
+        EditorWidget.__init__(self, parent)
+        
+        self.sprites = sprites
+        self.levels = []
+        
+        self.setLevel(levels, puzzle, 1)
+    
+    def loadImages(self):
+    
+        self.tile_images = {}
+        
+        palette = map(lambda x: qRgb(*x), self.levels_obj.palette(self.level_number - 1))
+        
+        for number in self.sprites.sprite_table.keys():
+        
+            sprite = self.sprites.read_sprite(number)
+            
+            image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
+            image.setColorTable(palette)
+            self.tile_images[number] = image
+        
+        for number in range(21):
+        
+            sprite = self.puzzle.read_sprite(self.level_number - 1, number)
+            
+            image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
+            image.setColorTable(palette)
+            self.tile_images[number + 0x10] = image
+    
+    def loadLevels(self):
+    
+        self.levels = map(self.levels_obj.read, range(5))
+    
+    def setTileImages(self, tile_images):
+    
+        self.tile_images = tile_images
+    
+    def clearLevel(self):
+    
+        for row in range(self.rows):
+            for column in range(self.columns):
+                self.writeTile(column, row, self.currentTile)
+    
+    def setLevel(self, levels, puzzle, number):
+    
+        self.levels_obj = levels
+        self.puzzle = puzzle
+        
+        self.level_number = number
+        self.loadLevels()
+        self.loadImages()
+        
+        self.update()
+    
+    def readTile(self, c, r):
+    
+        tile = self.levels[self.level_number - 1][r][c]
+        if tile != 255:
+            return self.tile_images[tile]
+        else:
+            return None
+    
+    def writeTile(self, c, r, tile):
+    
+        if not (0 <= r < self.rows and 0 <= c < self.columns):
+            return
+        
+        self.levels[self.level_number - 1][r][c] = tile
+        self.updateCell(c, r)
+
+
+class PuzzleWidget(EditorWidget):
+
+    xs = 2
+    ys = 1
+    
+    tw = Sprites.tile_width
+    th = Sprites.tile_height
+    
+    rows = Puzzle.rows
+    columns = Puzzle.columns
+    
+    bw = Puzzle.block_width
+    bh = Puzzle.block_height
+    
+    palette = [(0,0,0), (255,0,0), (0,255,0), (0,0,255)]
+    
+    def __init__(self, puzzle, parent = None):
+    
+        EditorWidget.__init__(self, parent)
+        self.blocks = []
+        
+        self.setLevel(puzzle, 1)
+        self.loadBlocks()
+    
+    def loadBlocks(self):
+    
+        self.block_images = {}
+        
+        palette = map(lambda x: qRgb(*x), self.palette)
+        
+        keys = Puzzle.blocks.keys()
+        keys.sort()
+        
+        for key in keys:
+        
+            sprite = "".join(self.puzzle.read_block(Puzzle.blocks[key]))
+            
+            image = QImage(sprite, self.bw, self.bh, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
+            image.setColorTable(palette)
+            self.block_images[key] = image
+    
+    def loadImages(self):
+    
+        self.tile_images = {}
+        
+        palette = map(lambda x: qRgb(*x), self.palette)
+        
+        for number in range(21):
+        
+            sprite = self.puzzle.read_sprite(self.level_number - 1, number)
+            
+            image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
+            image.setColorTable(palette)
+            self.tile_images[number + 0x10] = image
+    
+    def setLevel(self, puzzle, number):
+    
+        self.puzzle = puzzle
+        
+        self.level_number = number
+        self.loadImages()
+        
+        self.update()
+    
+    def readTile(self, c, r):
+    
+        tile = 0x10 + (r * 7) + c
+        if tile != 255:
+            return self.tile_images[tile]
+        else:
+            return None
     
     def writeTile(self, c, r, tile):
     
@@ -224,8 +318,10 @@ class EditorWindow(QMainWindow):
         self.ys = 1
         
         self.path = ""
+        self.set = ""
         
         self.levelWidget = LevelWidget(self.levels, self.sprites, self.puzzle)
+        self.puzzleWidget = PuzzleWidget(self.puzzle)
         
         self.createToolBars()
         self.createMenus()
@@ -252,6 +348,7 @@ class EditorWindow(QMainWindow):
             if details["name"] == name:
                 break
         
+        self.set = name
         self.levels = Levels(details["data"])
         self.sprites = Sprites(details["data"][0xabd:])
         self.puzzle = Puzzle(details["data"])
@@ -272,7 +369,7 @@ class EditorWindow(QMainWindow):
     def saveLevels(self, path):
     
         # Write the levels back to the UEF file.
-        self.game_info.write_levels(self.levelWidget.levels)
+        self.writeLevels(self.levelWidget.levels)
         
         # Write the new UEF file.
         u = UEFfile.UEFfile(creator = 'Clogger Editor ' + __version__)
@@ -280,7 +377,7 @@ class EditorWindow(QMainWindow):
         u.target_machine = "Electron"
         
         files = map(lambda x: (x["name"], x["load"], x["exec"], x["data"]),
-                    self.game_info.uef.contents)
+                    self.uef.contents)
         
         u.import_files(0, files, gap = True)
         
@@ -290,21 +387,25 @@ class EditorWindow(QMainWindow):
         except UEFfile.UEFfile_error:
             return False
     
-    def saveImageAs(self):
+    def saveLevelImageAs(self):
     
-        path = QFileDialog.getSaveFileName(self, self.tr("Save Image As"),
-                                           self.path, self.tr("PNG files (*.png)"))
+        path = QFileDialog.getSaveFileName(self, self.tr("Save Level Image As"),
+            "%s-%i.png" % (self.set, self.levelWidget.level_number), self.tr("PNG files (*.png)"))
         if not path.isEmpty():
         
             if not self.levelWidget.saveImage(unicode(path)):
-                QMessageBox.warning(self, self.tr("Save Image"),
+                QMessageBox.warning(self, self.tr("Save Level Image"),
                     self.tr("Couldn't save the image '%1'.\n").arg(path))
     
-    def saveImage(self, path):
+    def savePuzzleImageAs(self):
     
-        image = QImage(self.sizeHint(), QImage.Format_RGB16)
-        self.paint(image, QRect(QPoint(0, 0), image.size()))
-        return image.save(path)
+        path = QFileDialog.getSaveFileName(self, self.tr("Save Puzzle Image As"),
+            "%s-%i.png" % (self.set, self.levelWidget.level_number), self.tr("PNG files (*.png)"))
+        if not path.isEmpty():
+        
+            if not self.puzzleWidget.saveImage(unicode(path)):
+                QMessageBox.warning(self, self.tr("Save Puzzle Image"),
+                    self.tr("Couldn't save the image '%1'.\n").arg(path))
     
     def createToolBars(self):
     
@@ -312,22 +413,30 @@ class EditorWindow(QMainWindow):
         
         collection = self.sprites.sprite_table.keys()
         collection.sort()
-        toolbar_areas = [Qt.TopToolBarArea]
-        titles = [self.tr("Tiles")]
+        puzzle_collection = range(0x10, 0x10 + 21)
+        toolbar_areas = [Qt.TopToolBarArea, Qt.TopToolBarArea]
+        titles = [self.tr("Tiles"), self.tr("Puzzle pieces")]
         
-        for symbols, area, title in zip([collection], toolbar_areas, titles):
+        collections = [collection, puzzle_collection]
+        
+        for symbols, area, title in zip(collections, toolbar_areas, titles):
         
             tilesToolBar = QToolBar(title)
             self.addToolBar(area, tilesToolBar)
             
             for symbol in symbols:
             
-                icon = QIcon(QPixmap.fromImage(self.levelWidget.tile_images[symbol]))
+                image = self.levelWidget.tile_images[symbol]
+                icon = QIcon(QPixmap.fromImage(image))
                 action = tilesToolBar.addAction(icon, str(symbol))
                 action.setData(QVariant(symbol))
                 action.setCheckable(True)
                 self.tileGroup.addAction(action)
                 action.triggered.connect(self.setCurrentTile)
+        
+        puzzleBar = QToolBar(self.tr("Puzzle"))
+        puzzleBar.addWidget(self.puzzleWidget)
+        self.addToolBar(Qt.BottomToolBarArea, puzzleBar)
     
     def createMenus(self):
     
@@ -341,9 +450,13 @@ class EditorWindow(QMainWindow):
         saveAsAction.triggered.connect(self.saveAs)
         saveAsAction.setEnabled(False)
         
-        self.saveImageAsAction = fileMenu.addAction(self.tr("Save Image &As..."))
-        self.saveImageAsAction.triggered.connect(self.saveImageAs)
-        self.saveImageAsAction.setEnabled(False)
+        self.saveLevelImageAsAction = fileMenu.addAction(self.tr("Save Level Image &As..."))
+        self.saveLevelImageAsAction.triggered.connect(self.saveLevelImageAs)
+        self.saveLevelImageAsAction.setEnabled(False)
+        
+        self.savePuzzleImageAsAction = fileMenu.addAction(self.tr("Save Puzzle Image &As..."))
+        self.savePuzzleImageAsAction.triggered.connect(self.savePuzzleImageAs)
+        self.savePuzzleImageAsAction.setEnabled(False)
         
         quitAction = fileMenu.addAction(self.tr("E&xit"))
         quitAction.setShortcut(self.tr("Ctrl+Q"))
@@ -382,9 +495,8 @@ class EditorWindow(QMainWindow):
     
         self.openSet(name)
         
-        self.levelWidget.levels_obj = self.levels
-        self.levelWidget.puzzle = self.puzzle
-        self.levelWidget.setLevel(number)
+        self.levelWidget.setLevel(self.levels, self.puzzle, number)
+        self.puzzleWidget.setLevel(self.puzzle, number)
         
         # Also change the sprites in the toolbar.
         for action in self.tileGroup.actions():
@@ -393,7 +505,8 @@ class EditorWindow(QMainWindow):
             icon = QIcon(QPixmap.fromImage(self.levelWidget.tile_images[symbol]))
             action.setIcon(icon)
         
-        self.saveImageAsAction.setEnabled(True)
+        self.saveLevelImageAsAction.setEnabled(True)
+        self.savePuzzleImageAsAction.setEnabled(True)
     
     def clearLevel(self):
     
@@ -402,6 +515,10 @@ class EditorWindow(QMainWindow):
         
         if answer == QMessageBox.Yes:
             self.levelWidget.clearLevel()
+    
+    def writeLevels(self):
+    
+        pass
     
     def sizeHint(self):
     

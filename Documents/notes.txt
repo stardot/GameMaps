@@ -10,18 +10,9 @@ Values 0x00 to 0x0f are ordinary scenery or collectable tiles, tiles 0x26 to
 Loading the SLIPPER file at 0x5403 in order to align the graphics to rows on
 screen, it appears that the wall sprite starts at 0xabd.
 
-Puzzle pieces are arrays of 4 by 4 blocks, with at least six different
-colours: black, dark blue, blue, red, yellow and light blue. This means that
-each piece should require at least 3 bits per block, so 12 bits per row, and
-48 bits in total. Since each piece will be 6 bytes in total and there are 21
-for each puzzle, we should look for sections of 126 bytes in length in each
-level file.
-
-If there are more bits required to represent a block then there will be
-correspondingly more bytes required to represent a puzzle. For 4 bits per
-block, there will be 64 bits per piece and 168 bytes per puzzle.
-
-It turns out that there are 8 bits per block, so each block is 16 bytes.
+Puzzle pieces are arrays of 4 by 4 blocks, with twelve different colours.
+There are 8 bits per block, so each piece is 16 bytes long. Each puzzle is
+therefore 21 * 16 bytes long (336 bytes).
 
 The puzzle pieces start at 0x3a5 in each level file.
 
