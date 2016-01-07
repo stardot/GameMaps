@@ -50,3 +50,15 @@ class Levels:
     def palette(self, number):
     
         return [(0,0,0), (255,0,0), (0,255,0), (0,0,255)]
+    
+    def read_tile(self, number, column, row):
+    
+        level_start = 0xf7d + (number * 32 * 32)
+        
+        return ord(self.data[level_start + (row * 32) + column])
+    
+    def write_tile(self, number, column, row, value):
+    
+        level_start = 0xf7d + (number * 32 * 32)
+        
+        self.data[level_start + (row * 32) + column] = chr(value)

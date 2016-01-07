@@ -152,12 +152,13 @@ class LevelWidget(EditorWidget):
     rows = Levels.width
     columns = Levels.height
     
-    def __init__(self, levels, sprites, puzzle, parent = None):
+    def __init__(self, levels, sprites, puzzle, character, parent = None):
     
         EditorWidget.__init__(self, parent)
         
+        self.levels = levels
         self.sprites = sprites
-        self.levels = []
+        self.character = character
         
         self.setLevel(levels, puzzle, 1)
     
@@ -182,10 +183,14 @@ class LevelWidget(EditorWidget):
             image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
             image.setColorTable(palette)
             self.tile_images[number + 0x10] = image
-    
-    def loadLevels(self):
-    
-        self.levels = map(self.levels_obj.read, range(5))
+        
+        # Read the character sprite from a separate Sprites instance.
+        sprite = self.character.read_sprite(0xff)
+        lines = map(lambda i: sprite[i:i+16], range(0, 512, 16))
+        lines.reverse()
+        image = QImage("".join(lines), self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
+        image.setColorTable(palette)
+        self.tile_images[0xff] = image
     
     def setTileImages(self, tile_images):
     
@@ -203,25 +208,21 @@ class LevelWidget(EditorWidget):
         self.puzzle = puzzle
         
         self.level_number = number
-        self.loadLevels()
         self.loadImages()
         
         self.update()
     
     def readTile(self, c, r):
     
-        tile = self.levels[self.level_number - 1][r][c]
-        if tile != 255:
-            return self.tile_images[tile]
-        else:
-            return None
+        tile = self.levels.read_tile(self.level_number - 1, c, r)
+        return self.tile_images[tile]
     
     def writeTile(self, c, r, tile):
     
         if not (0 <= r < self.rows and 0 <= c < self.columns):
             return
         
-        self.levels[self.level_number - 1][r][c] = tile
+        self.levels.write_tile(self.level_number - 1, c, r, tile)
         self.updateCell(c, r)
 
 
@@ -230,14 +231,11 @@ class PuzzleWidget(EditorWidget):
     xs = 2
     ys = 1
     
-    tw = Sprites.tile_width
-    th = Sprites.tile_height
+    tw = Puzzle.block_width
+    th = Puzzle.block_height
     
-    rows = Puzzle.rows
-    columns = Puzzle.columns
-    
-    bw = Puzzle.block_width
-    bh = Puzzle.block_height
+    rows = Puzzle.rows * 4
+    columns = Puzzle.columns * 4
     
     palette = [(0,0,0), (255,0,0), (0,255,0), (0,0,255)]
     
@@ -247,11 +245,10 @@ class PuzzleWidget(EditorWidget):
         self.blocks = []
         
         self.setLevel(puzzle, 1)
-        self.loadBlocks()
     
-    def loadBlocks(self):
+    def loadImages(self):
     
-        self.block_images = {}
+        self.tile_images = {}
         
         palette = map(lambda x: qRgb(*x), self.palette)
         
@@ -262,23 +259,9 @@ class PuzzleWidget(EditorWidget):
         
             sprite = "".join(self.puzzle.read_block(Puzzle.blocks[key]))
             
-            image = QImage(sprite, self.bw, self.bh, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
-            image.setColorTable(palette)
-            self.block_images[key] = image
-    
-    def loadImages(self):
-    
-        self.tile_images = {}
-        
-        palette = map(lambda x: qRgb(*x), self.palette)
-        
-        for number in range(21):
-        
-            sprite = self.puzzle.read_sprite(self.level_number - 1, number)
-            
             image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
             image.setColorTable(palette)
-            self.tile_images[number + 0x10] = image
+            self.tile_images[key] = image
     
     def setLevel(self, puzzle, number):
     
@@ -291,18 +274,17 @@ class PuzzleWidget(EditorWidget):
     
     def readTile(self, c, r):
     
-        tile = 0x10 + (r * 7) + c
-        if tile != 255:
-            return self.tile_images[tile]
-        else:
-            return None
+        piece = ((r/4) * 7) + (c/4)
+        tile = self.puzzle.read_block_number(self.level_number - 1, piece, c % 4, r % 4)
+        return self.tile_images[tile]
     
     def writeTile(self, c, r, tile):
     
         if not (0 <= r < self.rows and 0 <= c < self.columns):
             return
         
-        self.levels[self.level_number - 1][r][c] = tile
+        piece = ((r/4) * 7) + (c/4)
+        self.puzzle.write_block_number(self.level_number - 1, piece, c % 4, r % 4, tile)
         self.updateCell(c, r)
 
 
@@ -312,15 +294,16 @@ class EditorWindow(QMainWindow):
     
         QMainWindow.__init__(self)
         
-        self.openUEF(uef_file)
-        
         self.xs = 2
         self.ys = 1
         
-        self.path = ""
         self.set = ""
+        self.sets = {}
         
-        self.levelWidget = LevelWidget(self.levels, self.sprites, self.puzzle)
+        self.openUEF(uef_file)
+        
+        self.levelWidget = LevelWidget(self.levels, self.sprites, self.puzzle,
+                                       self.character)
         self.puzzleWidget = PuzzleWidget(self.puzzle)
         
         self.createToolBars()
@@ -335,32 +318,46 @@ class EditorWindow(QMainWindow):
         area.setWidget(self.levelWidget)
         self.setCentralWidget(area)
     
+    def openFile(self):
+    
+        path = QFileDialog.getOpenFileName(self, self.tr("Open File"),
+                                           self.uef_file, self.tr("UEF files (*.uef)"))
+        if not path.isEmpty():
+            self.openUEF(unicode(path))
+    
     def openUEF(self, uef_file):
     
         self.uef_file = uef_file
         
         self.uef = UEFfile.UEFfile(uef_file)
+        
+        for details in self.uef.contents:
+            name = details["name"]
+            if name in Levels.sets:
+                self.sets[name] = list(details["data"])
+            elif name == "SPTDATA":
+                self.character = Sprites(details["data"])
+        
         self.openSet(Levels.sets[0])
+        self.setWindowTitle(self.tr(uef_file))
     
     def openSet(self, name):
     
-        for details in self.uef.contents:
-            if details["name"] == name:
-                break
+        data = self.sets[name]
         
         self.set = name
-        self.levels = Levels(details["data"])
-        self.sprites = Sprites(details["data"][0xabd:])
-        self.puzzle = Puzzle(details["data"])
+        self.levels = Levels(data)
+        self.sprites = Sprites(data[0xabd:])
+        self.puzzle = Puzzle(data)
     
     def saveAs(self):
     
         path = QFileDialog.getSaveFileName(self, self.tr("Save As"),
-                                           self.path, self.tr("UEF files (*.uef)"))
+                                           self.uef_file, self.tr("UEF files (*.uef)"))
         if not path.isEmpty():
         
             if self.saveLevels(unicode(path)):
-                self.path = path
+                self.uef_file = path
                 self.setWindowTitle(self.tr(path))
             else:
                 QMessageBox.warning(self, self.tr("Save Levels"),
@@ -369,7 +366,7 @@ class EditorWindow(QMainWindow):
     def saveLevels(self, path):
     
         # Write the levels back to the UEF file.
-        self.writeLevels(self.levelWidget.levels)
+        self.writeLevels()
         
         # Write the new UEF file.
         u = UEFfile.UEFfile(creator = 'Clogger Editor ' + __version__)
@@ -442,13 +439,16 @@ class EditorWindow(QMainWindow):
     
         fileMenu = self.menuBar().addMenu(self.tr("&File"))
         
-        newAction = fileMenu.addAction(self.tr("&New"))
-        newAction.setShortcut(QKeySequence.New)
+        #newAction = fileMenu.addAction(self.tr("&New"))
+        #newAction.setShortcut(QKeySequence.New)
+        
+        openAction = fileMenu.addAction(self.tr("&Open..."))
+        openAction.setShortcut(QKeySequence.Open)
+        openAction.triggered.connect(self.openFile)
         
         saveAsAction = fileMenu.addAction(self.tr("Save &As..."))
         saveAsAction.setShortcut(QKeySequence.SaveAs)
         saveAsAction.triggered.connect(self.saveAs)
-        saveAsAction.setEnabled(False)
         
         self.saveLevelImageAsAction = fileMenu.addAction(self.tr("Save Level Image &As..."))
         self.saveLevelImageAsAction.triggered.connect(self.saveLevelImageAs)
@@ -518,7 +518,10 @@ class EditorWindow(QMainWindow):
     
     def writeLevels(self):
     
-        pass
+        for details in self.uef.contents:
+            name = details["name"]
+            if name in Levels.sets:
+                details["data"] = "".join(self.sets[name])
     
     def sizeHint(self):
     

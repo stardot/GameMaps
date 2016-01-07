@@ -108,7 +108,11 @@ class Sprites:
         0x2a: (0x3c0, 0x1d0, 0x1f0, 0x3c0,
                0x1c0, 0x1d8, 0x1f8, 0x210,
                0x1c8, 0x1e0, 0x200, 0x218,
-               0x3c0, 0x1e8, 0x208, 0x3c0)
+               0x3c0, 0x1e8, 0x208, 0x3c0),
+        0xff: (0x60, 0x40, 0x20, 0x00,
+               0x68, 0x48, 0x28, 0x08,
+               0x70, 0x50, 0x30, 0x10,
+               0x78, 0x58, 0x38, 0x18)
         }
     
     tile_width = 16
@@ -216,3 +220,16 @@ class Puzzle(Sprites):
             piece.append("".join(row))
         
         return "".join(piece)
+    
+    def read_block_number(self, level, number, c, r):
+    
+        start = 0x3a5 + (level * 21 * 16) + (number * 16)
+        
+        return ord(self.data[start + (c * 4) + r])
+    
+    def write_block_number(self, level, number, c, r, value):
+    
+        start = 0x3a5 + (level * 21 * 16) + (number * 16)
+        offset = start + (c * 4) + r
+        
+        self.data[offset] = chr(value)
