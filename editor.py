@@ -331,6 +331,7 @@ class EditorWindow(QMainWindow):
                                            self.uef_file, self.tr("UEF files (*.uef)"))
         if not path.isEmpty():
             self.openUEF(unicode(path))
+            self.setLevel(self.set, 1)
     
     def openUEF(self, uef_file):
     
@@ -511,6 +512,7 @@ class EditorWindow(QMainWindow):
         name, number = action.data().toPyObject()
         self.setLevel(name, number)
         self.passwordEdit.setText(self.levelWidget.getPassword())
+        self.passwordEdit.setEnabled(number != 1)
     
     def setLevel(self, name, number):
     
