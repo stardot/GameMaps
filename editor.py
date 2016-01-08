@@ -29,7 +29,7 @@ import UEFfile
 from Clogger.levels import Levels
 from Clogger.sprites import Sprites, Puzzle
 
-__version__ = "0.2"
+__version__ = "0.9"
 
 class EditorWidget(QWidget):
 
@@ -604,9 +604,6 @@ class EditorWindow(QMainWindow):
         levelToolBar = QToolBar(self.tr("Levels"))
         self.addToolBar(Qt.BottomToolBarArea, levelToolBar)
         
-        areaLabel = QLabel(self.tr("Target area:"))
-        levelToolBar.addWidget(areaLabel)
-        
         self.areaWidget = AreaWidget()
         self.areaWidget.valueChanged.connect(self.levelWidget.readTargetArea)
         levelToolBar.addWidget(self.areaWidget)
@@ -671,6 +668,26 @@ class EditorWindow(QMainWindow):
                 self.levelsGroup.addAction(levelAction)
         
         levelsMenu.triggered.connect(self.selectLevel)
+        
+        helpMenu = self.menuBar().addMenu(self.tr("&Help"))
+        
+        aboutAction = helpMenu.addAction(self.tr("&About..."))
+        
+        image = self.levelWidget.tile_images[0xff]
+        icon = QIcon(QPixmap.fromImage(image))
+        self.setWindowIcon(icon)
+        
+        self.aboutBox = QMessageBox(QMessageBox.NoIcon, self.tr("About This Application"),
+            self.tr("<qt>A level/puzzle editor for the Acorn Electron version "
+                    "of Impact Software's Clogger.<p><b>Version:</b> %1</qt>").arg(__version__),
+            QMessageBox.Close, self)
+        
+        self.aboutBox.setDetailedText(__doc__.strip())
+        self.aboutBox.setWindowIcon(icon)
+        aboutAction.triggered.connect(self.aboutBox.exec_)
+        
+        aboutQtAction = helpMenu.addAction(self.tr("&About Qt..."))
+        aboutQtAction.triggered.connect(qApp.aboutQt)
     
     def setCurrentTile(self):
     
