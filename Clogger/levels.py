@@ -62,3 +62,18 @@ class Levels:
         level_start = 0xf7d + (number * 32 * 32)
         
         self.data[level_start + (row * 32) + column] = chr(value)
+    
+    def get_password(self, number):
+    
+        # Decode the password from the level data.
+        decoded = ""
+        for i in range(number * 7, (number + 1) * 7):
+            decoded += chr(ord(self.data[i]) ^ i)
+        
+        return decoded
+    
+    def set_password(self, number, text):
+    
+        # Encode the password and store it in the level data.
+        for i in range(number * 7, (number + 1) * 7):
+            self.data[i] = chr(ord(text[i % 7]) ^ i)

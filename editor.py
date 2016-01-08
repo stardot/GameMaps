@@ -41,7 +41,6 @@ class EditorWidget(QWidget):
         QWidget.__init__(self, parent)
         
         self.currentTile = 0
-        self.highlight = None
         
         self.setAutoFillBackground(True)
         p = QPalette()
@@ -166,7 +165,7 @@ class LevelWidget(EditorWidget):
     
         self.tile_images = {}
         
-        palette = map(lambda x: qRgb(*x), self.levels_obj.palette(self.level_number - 1))
+        palette = map(lambda x: qRgb(*x), self.levels.palette(self.level_number - 1))
         
         for number in self.sprites.sprite_table.keys():
         
@@ -204,13 +203,21 @@ class LevelWidget(EditorWidget):
     
     def setLevel(self, levels, puzzle, number):
     
-        self.levels_obj = levels
+        self.levels = levels
         self.puzzle = puzzle
         
         self.level_number = number
         self.loadImages()
         
         self.update()
+    
+    def getPassword(self):
+    
+        return self.levels.get_password(self.level_number - 1)
+    
+    def setPassword(self, text):
+    
+        self.levels.set_password(self.level_number - 1, text)
     
     def readTile(self, c, r):
     
@@ -434,6 +441,20 @@ class EditorWindow(QMainWindow):
         puzzleBar = QToolBar(self.tr("Puzzle"))
         puzzleBar.addWidget(self.puzzleWidget)
         self.addToolBar(Qt.BottomToolBarArea, puzzleBar)
+        
+        # Add a level toolbar with a password widget.
+        levelToolBar = QToolBar(self.tr("Levels"))
+        self.addToolBar(Qt.BottomToolBarArea, levelToolBar)
+        passwordLabel = QLabel(self.tr("&Password:"))
+        levelToolBar.addWidget(passwordLabel)
+        
+        self.passwordEdit = QLineEdit()
+        self.passwordEdit.setMaxLength(7)
+        self.passwordEdit.setValidator(QRegExpValidator(QRegExp("[A-Z]+"), self))
+        self.passwordEdit.textChanged.connect(self.updatePassword)
+        levelToolBar.addWidget(self.passwordEdit)
+        
+        passwordLabel.setBuddy(self.passwordEdit)
     
     def createMenus(self):
     
@@ -488,8 +509,8 @@ class EditorWindow(QMainWindow):
     def selectLevel(self, action):
     
         name, number = action.data().toPyObject()
-        self.levelWidget.highlight = None
         self.setLevel(name, number)
+        self.passwordEdit.setText(self.levelWidget.getPassword())
     
     def setLevel(self, name, number):
     
@@ -522,6 +543,10 @@ class EditorWindow(QMainWindow):
             name = details["name"]
             if name in Levels.sets:
                 details["data"] = "".join(self.sets[name])
+    
+    def updatePassword(self, text):
+    
+        self.levelWidget.setPassword(str(text))
     
     def sizeHint(self):
     
