@@ -36,6 +36,8 @@ class EditorWidget(QWidget):
     xs = 2
     ys = 1
     
+    updated = pyqtSignal()
+    
     def __init__(self, parent = None):
     
         QWidget.__init__(self, parent)
@@ -175,13 +177,7 @@ class LevelWidget(EditorWidget):
             image.setColorTable(palette)
             self.tile_images[number] = image
         
-        for number in range(21):
-        
-            sprite = self.puzzle.read_sprite(self.level_number - 1, number)
-            
-            image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
-            image.setColorTable(palette)
-            self.tile_images[number + 0x10] = image
+        self.loadPuzzleImages(update = False)
         
         # Read the character sprite from a separate Sprites instance.
         sprite = self.character.read_sprite(0xff)
@@ -190,6 +186,21 @@ class LevelWidget(EditorWidget):
         image = QImage("".join(lines), self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
         image.setColorTable(palette)
         self.tile_images[0xff] = image
+    
+    def loadPuzzleImages(self, update = True):
+    
+        palette = map(lambda x: qRgb(*x), self.levels.palette(self.level_number - 1))
+        
+        for number in range(21):
+        
+            sprite = self.puzzle.read_sprite(self.level_number - 1, number)
+            
+            image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
+            image.setColorTable(palette)
+            self.tile_images[number + 0x10] = image
+        
+        if update:
+            self.update()
     
     def setTileImages(self, tile_images):
     
@@ -233,7 +244,7 @@ class LevelWidget(EditorWidget):
         self.updateCell(c, r)
 
 
-class PuzzleWidget(EditorWidget):
+class PuzzleEditor(EditorWidget):
 
     xs = 2
     ys = 1
@@ -249,9 +260,9 @@ class PuzzleWidget(EditorWidget):
     def __init__(self, puzzle, parent = None):
     
         EditorWidget.__init__(self, parent)
-        self.blocks = []
         
         self.setLevel(puzzle, 1)
+        self.changed = False
     
     def loadImages(self):
     
@@ -279,6 +290,10 @@ class PuzzleWidget(EditorWidget):
         
         self.update()
     
+    def setCurrentTile(self, value):
+    
+        self.currentTile = value
+    
     def readTile(self, c, r):
     
         piece = ((r/4) * 7) + (c/4)
@@ -291,8 +306,74 @@ class PuzzleWidget(EditorWidget):
             return
         
         piece = ((r/4) * 7) + (c/4)
+        oldTile = self.puzzle.read_block_number(self.level_number - 1, piece, c % 4, r % 4)
+        
         self.puzzle.write_block_number(self.level_number - 1, piece, c % 4, r % 4, tile)
         self.updateCell(c, r)
+        
+        if tile != oldTile:
+            self.changed = True
+    
+    def mouseReleaseEvent(self, event):
+    
+        if self.changed:
+            self.updated.emit()
+            self.changed = False
+
+
+class PuzzlePalette(PuzzleEditor):
+
+    rows = 12
+    columns = 1
+    
+    currentChanged = pyqtSignal(int)
+    
+    def __init__(self, puzzle, parent = None):
+    
+        PuzzleEditor.__init__(self, puzzle, parent)
+        
+        self.blocks = Puzzle.blocks.keys()
+        self.blocks.sort()
+    
+    def readTile(self, c, r):
+    
+        tile = self.blocks[r]
+        return self.tile_images[tile]
+    
+    def writeTile(self, c, r, tile):
+    
+        if not (0 <= r < self.rows and 0 <= c < self.columns):
+            return
+        
+        tile = self.blocks[r]
+        self.currentChanged.emit(tile)
+
+
+class PuzzleWidget(QWidget):
+
+    updated = pyqtSignal()
+    
+    def __init__(self, puzzle, parent = None):
+    
+        QWidget.__init__(self, parent)
+        
+        self.puzzleEditor = PuzzleEditor(puzzle)
+        self.puzzlePalette = PuzzlePalette(puzzle)
+        
+        self.puzzleEditor.updated.connect(self.updated)
+        self.puzzlePalette.currentChanged.connect(self.puzzleEditor.setCurrentTile)
+        
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.puzzleEditor)
+        layout.addWidget(self.puzzlePalette)
+    
+    def saveImage(self, path):
+    
+        return self.puzzleEditor.saveImage(path)
+    
+    def setLevel(self, puzzle, number):
+    
+        self.puzzleEditor.setLevel(puzzle, number)
 
 
 class EditorWindow(QMainWindow):
@@ -312,6 +393,10 @@ class EditorWindow(QMainWindow):
         self.levelWidget = LevelWidget(self.levels, self.sprites, self.puzzle,
                                        self.character)
         self.puzzleWidget = PuzzleWidget(self.puzzle)
+        
+        # Ensure that changes to the puzzle are reflected in the images used
+        # for the puzzle pieces.
+        self.puzzleWidget.updated.connect(self.updatePuzzleImages)
         
         self.createToolBars()
         self.createMenus()
@@ -416,28 +501,34 @@ class EditorWindow(QMainWindow):
     
         self.tileGroup = QActionGroup(self)
         
+        tilesToolBar = QToolBar(self.tr("Tiles"))
         collection = self.sprites.sprite_table.keys()
         collection.sort()
+        self.addToolBar(Qt.TopToolBarArea, tilesToolBar)
+        
+        for symbol in collection:
+        
+            image = self.levelWidget.tile_images[symbol]
+            icon = QIcon(QPixmap.fromImage(image))
+            action = tilesToolBar.addAction(icon, str(symbol))
+            action.setData(QVariant(symbol))
+            action.setCheckable(True)
+            self.tileGroup.addAction(action)
+            action.triggered.connect(self.setCurrentTile)
+        
+        piecesToolBar = QToolBar(self.tr("Puzzle pieces"))
         puzzle_collection = range(0x10, 0x10 + 21)
-        toolbar_areas = [Qt.TopToolBarArea, Qt.TopToolBarArea]
-        titles = [self.tr("Tiles"), self.tr("Puzzle pieces")]
+        self.addToolBar(Qt.TopToolBarArea, piecesToolBar)
         
-        collections = [collection, puzzle_collection]
+        for symbol in puzzle_collection:
         
-        for symbols, area, title in zip(collections, toolbar_areas, titles):
-        
-            tilesToolBar = QToolBar(title)
-            self.addToolBar(area, tilesToolBar)
-            
-            for symbol in symbols:
-            
-                image = self.levelWidget.tile_images[symbol]
-                icon = QIcon(QPixmap.fromImage(image))
-                action = tilesToolBar.addAction(icon, str(symbol))
-                action.setData(QVariant(symbol))
-                action.setCheckable(True)
-                self.tileGroup.addAction(action)
-                action.triggered.connect(self.setCurrentTile)
+            image = self.levelWidget.tile_images[symbol]
+            icon = QIcon(QPixmap.fromImage(image))
+            action = tilesToolBar.addAction(icon, str(symbol))
+            action.setData(QVariant(symbol))
+            action.setCheckable(True)
+            self.tileGroup.addAction(action)
+            action.triggered.connect(self.setCurrentTile)
         
         puzzleBar = QToolBar(self.tr("Puzzle"))
         puzzleBar.addWidget(self.puzzleWidget)
@@ -456,6 +547,21 @@ class EditorWindow(QMainWindow):
         levelToolBar.addWidget(self.passwordEdit)
         
         passwordLabel.setBuddy(self.passwordEdit)
+    
+    def updatePuzzleImages(self):
+    
+        self.levelWidget.loadPuzzleImages()
+        
+        puzzle_collection = range(0x10, 0x10 + 21)
+        
+        for action in self.tileGroup.actions():
+        
+            symbol, valid = action.data().toInt()
+            
+            if valid and 0x10 <= symbol < 0x10 + 21:
+                image = self.levelWidget.tile_images[symbol]
+                icon = QIcon(QPixmap.fromImage(image))
+                action.setIcon(icon)
     
     def createMenus(self):
     
