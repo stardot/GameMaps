@@ -74,6 +74,12 @@ class Levels:
     
     def set_password(self, number, text):
     
+        if len(text) < 7:
+            text += (7 - len(text)) * " "
+        else:
+            text = text[:7]
+        
         # Encode the password and store it in the level data.
-        for i in range(number * 7, (number + 1) * 7):
-            self.data[i] = chr(ord(text[i % 7]) ^ i)
+        for i in range(min(len(text), 7)):
+            offset = (number * 7) + i
+            self.data[offset] = chr(ord(text[i]) ^ offset)
