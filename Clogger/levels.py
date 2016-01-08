@@ -83,3 +83,16 @@ class Levels:
         for i in range(min(len(text), 7)):
             offset = (number * 7) + i
             self.data[offset] = chr(ord(text[i]) ^ offset)
+    
+    def get_target_position(self, number, piece):
+    
+        offset = 35 + (number * 42) + (piece * 2)
+        low, high = map(ord, self.data[offset:offset + 2])
+        return low & 0x1f, ((high & 0x03) << 3) | (low >> 5)
+    
+    def set_target_position(self, number, piece, x, y):
+    
+        offset = 35 + (number * 42) + (piece * 2)
+        low, high = x | ((y & 0x07) << 5), (y >> 3) | 0x04
+        self.data[offset] = chr(low)
+        self.data[offset + 1] = chr(high)

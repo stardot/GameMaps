@@ -43,6 +43,7 @@ class EditorWidget(QWidget):
         QWidget.__init__(self, parent)
         
         self.currentTile = 0
+        self.highlight = None
         
         self.setAutoFillBackground(True)
         p = QPalette()
@@ -110,6 +111,12 @@ class EditorWidget(QWidget):
                 if tile_image:
                     painter.drawImage(c * self.tw * self.xs, r * self.th * self.ys,
                                       tile_image)
+        
+        if self.highlight:
+            c1, r1, c2, r2 = self.highlight
+            x1, x2 = map(lambda x: x * self.tw * self.xs, (c1, c2))
+            y1, y2 = map(lambda y: y * self.th * self.ys, (r1, r2))
+            painter.drawRect(x1, y1, x2 - x1, y2 - y1)
         
         painter.end()
     
@@ -220,15 +227,17 @@ class LevelWidget(EditorWidget):
         self.level_number = number
         self.loadImages()
         
+        self.readTargetArea(update = False)
         self.update()
     
-    def getPassword(self):
+    def readTargetArea(self, update = True):
     
-        return self.levels.get_password(self.level_number - 1)
-    
-    def setPassword(self, text):
-    
-        self.levels.set_password(self.level_number - 1, text)
+        c1, r1 = self.levels.get_target_position(self.level_number - 1, 0)
+        c2, r2 = self.levels.get_target_position(self.level_number - 1, 20)
+        self.highlight = c1, r1, c2 + 1, r2 + 1
+        
+        if update:
+            self.update()
     
     def readTile(self, c, r):
     
@@ -374,6 +383,63 @@ class PuzzleWidget(QWidget):
     def setLevel(self, puzzle, number):
     
         self.puzzleEditor.setLevel(puzzle, number)
+
+
+class AreaWidget(QWidget):
+
+    valueChanged = pyqtSignal()
+    
+    def __init__(self, parent = None):
+    
+        QWidget.__init__(self, parent)
+        
+        self.passwordEdit = QLineEdit()
+        self.passwordEdit.setMaxLength(7)
+        self.passwordEdit.setValidator(QRegExpValidator(QRegExp("[A-Z]+"), self))
+        self.passwordEdit.textChanged.connect(self.updatePassword)
+        
+        self.columnEdit = QSpinBox()
+        self.columnEdit.setMinimum(0)
+        self.columnEdit.setMaximum(25)
+        
+        self.rowEdit = QSpinBox()
+        self.rowEdit.setMinimum(0)
+        self.rowEdit.setMaximum(25)
+        
+        self.columnEdit.valueChanged.connect(self.updateArea)
+        self.rowEdit.valueChanged.connect(self.updateArea)
+        
+        layout = QFormLayout(self)
+        layout.addRow(self.tr("&Password:"), self.passwordEdit)
+        layout.addRow(self.tr("&Column:"), self.columnEdit)
+        layout.addRow(self.tr("&Row:"), self.rowEdit)
+    
+    def setLevel(self, levels, number):
+    
+        self.levels = levels
+        self.level_number = number
+        
+        self.passwordEdit.setText(levels.get_password(number - 1))
+        self.passwordEdit.setEnabled(number != 1)
+        
+        c1, r1 = levels.get_target_position(number - 1, 0)
+        self.columnEdit.setValue(c1)
+        self.rowEdit.setValue(r1)
+    
+    def updatePassword(self, text):
+    
+        self.levels.set_password(self.level_number - 1, str(text))
+    
+    def updateArea(self):
+    
+        c1, r1 = self.columnEdit.value(), self.rowEdit.value()
+        
+        for i in range(21):
+            x = c1 + (i % 7)
+            y = r1 + (i / 7)
+            self.levels.set_target_position(self.level_number - 1, i, x, y)
+        
+        self.valueChanged.emit()
 
 
 class EditorWindow(QMainWindow):
@@ -524,7 +590,7 @@ class EditorWindow(QMainWindow):
         
             image = self.levelWidget.tile_images[symbol]
             icon = QIcon(QPixmap.fromImage(image))
-            action = tilesToolBar.addAction(icon, str(symbol))
+            action = piecesToolBar.addAction(icon, str(symbol))
             action.setData(QVariant(symbol))
             action.setCheckable(True)
             self.tileGroup.addAction(action)
@@ -534,19 +600,16 @@ class EditorWindow(QMainWindow):
         puzzleBar.addWidget(self.puzzleWidget)
         self.addToolBar(Qt.BottomToolBarArea, puzzleBar)
         
-        # Add a level toolbar with a password widget.
+        # Add a level toolbar with password and target area widgets.
         levelToolBar = QToolBar(self.tr("Levels"))
         self.addToolBar(Qt.BottomToolBarArea, levelToolBar)
-        passwordLabel = QLabel(self.tr("&Password:"))
-        levelToolBar.addWidget(passwordLabel)
         
-        self.passwordEdit = QLineEdit()
-        self.passwordEdit.setMaxLength(7)
-        self.passwordEdit.setValidator(QRegExpValidator(QRegExp("[A-Z]+"), self))
-        self.passwordEdit.textChanged.connect(self.updatePassword)
-        levelToolBar.addWidget(self.passwordEdit)
+        areaLabel = QLabel(self.tr("Target area:"))
+        levelToolBar.addWidget(areaLabel)
         
-        passwordLabel.setBuddy(self.passwordEdit)
+        self.areaWidget = AreaWidget()
+        self.areaWidget.valueChanged.connect(self.levelWidget.readTargetArea)
+        levelToolBar.addWidget(self.areaWidget)
     
     def updatePuzzleImages(self):
     
@@ -617,8 +680,6 @@ class EditorWindow(QMainWindow):
     
         name, number = action.data().toPyObject()
         self.setLevel(name, number)
-        self.passwordEdit.setText(self.levelWidget.getPassword())
-        self.passwordEdit.setEnabled(number != 1)
     
     def setLevel(self, name, number):
     
@@ -626,6 +687,7 @@ class EditorWindow(QMainWindow):
         
         self.levelWidget.setLevel(self.levels, self.puzzle, number)
         self.puzzleWidget.setLevel(self.puzzle, number)
+        self.areaWidget.setLevel(self.levels, number)
         
         # Also change the sprites in the toolbar.
         for action in self.tileGroup.actions():
@@ -651,10 +713,6 @@ class EditorWindow(QMainWindow):
             name = details["name"]
             if name in Levels.sets:
                 details["data"] = "".join(self.sets[name])
-    
-    def updatePassword(self, text):
-    
-        self.levelWidget.setPassword(str(text))
     
     def sizeHint(self):
     

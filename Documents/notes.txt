@@ -33,3 +33,23 @@ in the following way when creating a sprite:
   1 5 9 d
   2 6 a e
   3 7 b f
+
+The passwords are stored at the start of each level file as 5 strings of 7
+bytes in length, with each byte scrambled using the EOR of the offset into the
+file, so the first byte is actually unscrambed since (X EOR 0) is X.
+
+There is a collection of 210 non-zero values immediately following the password
+data. These are a series of coordinate pairs that can be interpreted either as
+offsets into the level data, or as two 5 bit values packed together. Each pair
+is stored in little-endian form and combined with 0x0400 using an OR operation,
+so we need to mask off the upper 6 bits when we read the values put back the
+extra bit when we write them.
+
+Each two bytes containing a coordinate pair correspond to the final location
+of a puzzle piece. The pairs are stored according to the location of the piece
+within the puzzle, with the first seven coordinate pairs describing the top row
+of the puzzle, then the middle row, and the last seven describing the bottom
+row.
+
+Five sets of 21 coordinates are given, describing the locations of the puzzle
+pieces on each level in ascending order.
