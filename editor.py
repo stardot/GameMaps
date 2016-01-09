@@ -332,8 +332,11 @@ class PuzzleEditor(EditorWidget):
 
 class PuzzlePalette(PuzzleEditor):
 
-    rows = 12
-    columns = 1
+    xs = 4
+    ys = 2
+    
+    rows = 6
+    columns = 2
     
     currentChanged = pyqtSignal(int)
     
@@ -346,7 +349,7 @@ class PuzzlePalette(PuzzleEditor):
     
     def readTile(self, c, r):
     
-        tile = self.blocks[r]
+        tile = self.blocks[(c * self.rows) + r]
         return self.tile_images[tile]
     
     def writeTile(self, c, r, tile):
@@ -354,7 +357,7 @@ class PuzzlePalette(PuzzleEditor):
         if not (0 <= r < self.rows and 0 <= c < self.columns):
             return
         
-        tile = self.blocks[r]
+        tile = self.blocks[(c * self.rows) + r]
         self.currentChanged.emit(tile)
 
 
