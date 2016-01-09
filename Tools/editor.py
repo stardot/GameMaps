@@ -286,9 +286,9 @@ class EditorWindow(QMainWindow):
         #newAction = fileMenu.addAction(self.tr("&New"))
         #newAction.setShortcut(QKeySequence.New)
         
-        saveAsAction = fileMenu.addAction(self.tr("Save &As..."))
-        saveAsAction.setShortcut(QKeySequence.SaveAs)
-        saveAsAction.triggered.connect(self.saveAs)
+        #saveAsAction = fileMenu.addAction(self.tr("Save &As..."))
+        #saveAsAction.setShortcut(QKeySequence.SaveAs)
+        #saveAsAction.triggered.connect(self.saveAs)
         
         quitAction = fileMenu.addAction(self.tr("E&xit"))
         quitAction.setShortcut(self.tr("Ctrl+Q"))
