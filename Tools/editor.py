@@ -283,8 +283,8 @@ class EditorWindow(QMainWindow):
     
         fileMenu = self.menuBar().addMenu(self.tr("&File"))
         
-        newAction = fileMenu.addAction(self.tr("&New"))
-        newAction.setShortcut(QKeySequence.New)
+        #newAction = fileMenu.addAction(self.tr("&New"))
+        #newAction.setShortcut(QKeySequence.New)
         
         saveAsAction = fileMenu.addAction(self.tr("Save &As..."))
         saveAsAction.setShortcut(QKeySequence.SaveAs)

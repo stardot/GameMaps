@@ -79,6 +79,6 @@ class Maps:
                     level[-1] += [upper, lower]
             
             # Stored a transposed version of the level.
-            levels.append(zip(*level))
+            levels.append(map(list, zip(*level)))
         
         return levels, items
