@@ -585,20 +585,6 @@ class EditorWindow(QMainWindow):
             self.tileGroup.addAction(action)
             action.triggered.connect(self.setCurrentTile)
         
-        piecesToolBar = QToolBar(self.tr("Puzzle pieces"))
-        puzzle_collection = range(0x10, 0x10 + 21)
-        self.addToolBar(Qt.TopToolBarArea, piecesToolBar)
-        
-        for symbol in puzzle_collection:
-        
-            image = self.levelWidget.tile_images[symbol]
-            icon = QIcon(QPixmap.fromImage(image))
-            action = piecesToolBar.addAction(icon, str(symbol))
-            action.setData(QVariant(symbol))
-            action.setCheckable(True)
-            self.tileGroup.addAction(action)
-            action.triggered.connect(self.setCurrentTile)
-        
         puzzleBar = QToolBar(self.tr("Puzzle"))
         puzzleBar.addWidget(self.puzzleWidget)
         self.addToolBar(Qt.BottomToolBarArea, puzzleBar)
@@ -610,6 +596,20 @@ class EditorWindow(QMainWindow):
         self.areaWidget = AreaWidget()
         self.areaWidget.valueChanged.connect(self.levelWidget.readTargetArea)
         levelToolBar.addWidget(self.areaWidget)
+        
+        piecesToolBar = QToolBar(self.tr("Puzzle pieces"))
+        puzzle_collection = range(0x10, 0x10 + 21)
+        self.addToolBar(Qt.BottomToolBarArea, piecesToolBar)
+        
+        for symbol in puzzle_collection:
+        
+            image = self.levelWidget.tile_images[symbol]
+            icon = QIcon(QPixmap.fromImage(image))
+            action = piecesToolBar.addAction(icon, str(symbol))
+            action.setData(QVariant(symbol))
+            action.setCheckable(True)
+            self.tileGroup.addAction(action)
+            action.triggered.connect(self.setCurrentTile)
     
     def updatePuzzleImages(self):
     
