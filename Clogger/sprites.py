@@ -122,9 +122,12 @@ class Sprites:
     
         self.data = data
     
-    def read_sprite(self, number):
+    def read_sprite(self, level, number):
     
         offsets = self.sprite_table[number]
+        
+        if level % 2 == 1 and 1 <= number <= 5:
+            offsets = map(lambda x: x + 0x30, offsets)
         
         columns = []
         for i in range(4):

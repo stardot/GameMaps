@@ -178,7 +178,7 @@ class LevelWidget(EditorWidget):
         
         for number in self.sprites.sprite_table.keys():
         
-            sprite = self.sprites.read_sprite(number)
+            sprite = self.sprites.read_sprite(self.level_number - 1, number)
             
             image = QImage(sprite, self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
             image.setColorTable(palette)
@@ -187,7 +187,7 @@ class LevelWidget(EditorWidget):
         self.loadPuzzleImages(update = False)
         
         # Read the character sprite from a separate Sprites instance.
-        sprite = self.character.read_sprite(0xff)
+        sprite = self.character.read_sprite(self.level_number - 1, 0xff)
         lines = map(lambda i: sprite[i:i+16], range(0, 512, 16))
         lines.reverse()
         image = QImage("".join(lines), self.tw, self.th, QImage.Format_Indexed8).scaled(self.xs * self.tw, self.ys * self.th)
