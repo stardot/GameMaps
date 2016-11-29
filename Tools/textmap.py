@@ -2,34 +2,7 @@
 
 import sys
 import UEFfile
-
-version = "0.1"
-
-def unscramble_data(data):
-
-    new_data = ""
-    for i in range(len(data)):
-    
-        new_data += chr(ord(data[i]) ^ (i % 256))
-    
-    return new_data
-
-
-def read_bits(byte):
-
-    bits = []
-    i = 128
-    while i > 0:
-    
-        if byte & i != 0:
-            bits.append(1)
-        else:
-            bits.append(0)
-        
-        i = i >> 1
-    
-    return bits
-
+import dunjunz
 
 type_map = {
     0x28: "T", # Treasure
@@ -68,62 +41,7 @@ if __name__ == "__main__":
         sys.stderr.write("Failed to find a suitable data file.\n")
         sys.exit(1)
     
-    data = unscramble_data(details["data"])
-    
-    solid = []
-    collectables = []
-    lookup = {}
-    
-    for i in range(1, 0x20):
-    
-        x = ord(data[i])
-        y = ord(data[0x20 + i])
-        t = ord(data[0x40 + i])
-        if t != 0xff:
-            lookup[(x, y)] = t
-    
-    doors = {}
-    
-    for i in range(1, 21):
-    
-        x = ord(data[0x60 + i])
-        y = ord(data[0x75 + i])
-        o = ord(data[0x8a + i])
-        if x != 0xff and y != 0xff and o != 0xff:
-            doors[(x, y)] = (i, o)
-    
-    keys = {}
-    
-    for i in range(1, 21):
-    
-        x = ord(data[0xa0 + i])
-        y = ord(data[0xb5 + i])
-        if x != 0xff and y != 0xff:
-            keys[(x, y)] = i
-    
-    trapdoors = set()
-    
-    for i in range(8):
-    
-        x = ord(data[0xd0 + i])
-        y = ord(data[0xd8 + i])
-        trapdoors.add((x, y))
-    
-    offset = 0
-    for row in range(48):
-    
-        r = ((row/8) * 0x20) + (row % 8)
-        solid_row = []
-        collectables_row = []
-        lookup_row = []
-        
-        for column in range(0, 32, 8):
-        
-            solid_row += read_bits(ord(data[0xe0 + r + column]))
-            collectables_row += read_bits(ord(data[0x1b0 + r + column]))
-        
-        solid.append(solid_row)
-        collectables.append(collectables_row)
+    level = dunjunz.Level(details["data"])
     
     for row in range(48):
     
@@ -132,16 +50,16 @@ if __name__ == "__main__":
             if 11 <= row <= 12 and 11 <= column <= 12:
                 sys.stdout.write("S")
             
-            elif (column, row) in keys:
-                n = keys[(column, row)]
+            elif (column, row) in level.keys:
+                n = level.keys[(column, row)]
                 sys.stdout.write("k")
             
-            elif (column, row) in trapdoors:
+            elif (column, row) in level.trapdoors:
                 sys.stdout.write("O")
             
-            elif solid[row][column]:
-                if (column, row) in doors:
-                    n, o = doors[(column, row)]
+            elif level.is_solid(row, column):
+                if (column, row) in level.doors:
+                    n, o = level.doors[(column, row)]
                     if o == 0x1d:
                         sys.stdout.write("-")
                     else:
@@ -149,8 +67,10 @@ if __name__ == "__main__":
                 else:
                     sys.stdout.write("#")
             
-            elif not collectables[row][column] and (column, row) in lookup:
-                t = lookup[(column, row)]
+            elif level.is_collectable(row, column) and \
+                 (column, row) in level.lookup:
+            
+                t = level.lookup[(column, row)]
                 sys.stdout.write(type_map[t])
             
             else:
