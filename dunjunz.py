@@ -42,6 +42,7 @@ class Level:
     def read_data(self, data):
     
         self.lookup = {}
+        self.teleporters = []
         
         for i in range(1, 0x20):
         
@@ -50,6 +51,8 @@ class Level:
             t = ord(data[0x40 + i])
             if t != 0xff:
                 self.lookup[(x, y)] = t
+                if t == 0x2b:
+                    self.teleporters.append((x, y))
         
         self.doors = {}
         
@@ -135,11 +138,13 @@ class Sprite:
         
         return sprite
     
-    def save(self, file_name):
+    def image(self, size = None):
     
         im = Image.fromstring("P", (8, 12), self.data)
         im.putpalette((0,0,0, 255,0,0, 0,255,0, 255,255,255))
-        im.save(file_name)
+        if size != None:
+            im = im.resize(size, Image.NEAREST)
+        return im
 
 
 class Sprites:
@@ -159,6 +164,7 @@ class Sprites:
                  "fireball_up", "fireball_right", "fireball_down", "fireball_left",
                  "axe_up", "axe_right", "axe_down", "axe_left",
                  "key", "treasure", "food"),
+        0x2100: ("teleport",),
         0x2208: ("v_door",),
         0x2240: ("exp0", "exp1", "exp2", "exp3", "trapdoor"),
         0x2340: ("arrow_up", "arrow_right", "arrow_down", "arrow_left", "h_door"),
@@ -173,11 +179,7 @@ class Sprites:
         self.data = data
         self.sprites = {}
         self.read_all(data)
-    
-    def save(self, name, file_name):
-    
-        sprite = self.sprites[name]
-        sprite.save(file_name)
+        self.sprites["blank"] = Sprite("\x00" * 8 * 12)
     
     def read_all(self, data):
     
