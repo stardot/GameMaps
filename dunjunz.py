@@ -14,6 +14,33 @@ def unscramble_data(data):
     return new_data
 
 
+checksums = [0x62, 0xcd, 0x0c, 0x44, 0x4d, 0x22, 0xf6, 0x42,
+             0x21, 0x7d, 0x5d, 0xd8, 0xa0, 0xf1, 0x0f, 0xcc,
+             0xd3, 0x53, 0x3b, 0x83, 0x71, 0xb2, 0x6f, 0xf3,
+             0xf1]
+
+def add_checksum(level_number, data):
+
+    """Accepts a complete set of level data, including a placeholder byte at
+    the start for the checksum, calculates the appropriate value for this and
+    fills it in, returning the updated string."""
+    
+    total = 0
+    
+    for i in range(1, len(data)):
+        total += ord(data[i])
+    
+    total = total & 0xff
+    
+    c = checksums[level_number - 1]
+    if c < total:
+        v = 0x100 + c - total
+    else:
+        v = c - total
+    
+    return chr(v) + data[1:]
+
+
 def read_bits(byte):
 
     bits = []
