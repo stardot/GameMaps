@@ -40,13 +40,14 @@ checksums = [0x62, 0xcd, 0x0c, 0x44, 0x4d, 0x22, 0xf6, 0x42,
 
 def add_checksum(level_number, data):
 
-    """Accepts a complete set of level data, including a placeholder byte at
-    the start for the checksum, calculates the appropriate value for this and
-    fills it in, returning the updated string."""
+    """Accepts a complete set of level data and calculates the appropriate
+    value to replace the last byte with in order to make the calculated
+    checksum for the data match the one stored in the game itself. The data
+    must be scrambled after this value has been added."""
     
     total = 0
     
-    for i in range(1, len(data)):
+    for i in range(len(data) - 1):
         total += ord(data[i])
     
     total = total & 0xff
@@ -57,7 +58,7 @@ def add_checksum(level_number, data):
     else:
         v = c - total
     
-    return chr(v) + data[1:]
+    return data[:-1] + chr(v)
 
 
 def read_bits(byte):
@@ -146,6 +147,9 @@ class Level:
         
         # Read the wall tile for the level.
         self.wall_sprite = Sprite(data[-48:-24])
+        
+        self.exit_x = ord(data[0x1e])
+        self.exit_y = ord(data[0x3e])
     
     def is_solid(self, row, column):
         return self.solid[row][column] != 0
