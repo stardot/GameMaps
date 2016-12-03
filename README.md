@@ -5,9 +5,11 @@ The Tools directory contains Python tools that extract images and maps from the
 data stored in a Universal Emulator Format (UEF) file. The tools are run from
 the command line from within the Icarus directory itself, like this:
 
+```
   PYTHONPATH=. ./Tools/imagemap.py Icarus_E.uef 1 /tmp/1.png
   PYTHONPATH=. ./Tools/textmap.py Icarus_E.uef A
   PYTHONPATH=. ./Tools/read_sprites.py Icarus_E.uef /tmp/sprites
+```
 
 You will also need to provide a suitable Icarus_E.uef file containing the
 files for the Acorn Electron version of Icarus. This is not provided in this
