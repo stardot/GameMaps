@@ -71,7 +71,7 @@ def get_image_name(level, level_number, row, column):
     
         name = type_map[level.lookup[(column, row)]]
         if name == "teleport":
-            return name, level.teleporters.index((column, row))
+            return name, level.teleporters.index((column, row)) + 1
         else:
             return name, None
     
@@ -193,10 +193,24 @@ raw_numbers = [
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 4:
+    if not 4 <= len(sys.argv) <= 5:
     
-        sys.stderr.write("Usage: %s <Dunjunz UEF file> <level> <output file name>\n" % sys.argv[0])
+        sys.stderr.write("Usage: %s <Dunjunz UEF file> <level> <output file name> [scale]\n" % sys.argv[0])
         sys.exit(1)
+    
+    elif len(sys.argv) == 5:
+        try:
+            scale = float(sys.argv[4])
+            if scale <= 0.0 or scale > 2.0:
+                raise ValueError
+        
+        except ValueError:
+            sys.stderr.write("Invalid scale specified. Must be 0.0 < scale <= 2.0.\n")
+            sys.exit(1)
+    else:
+        scale = 1
+    
+    tile_size = (32, 24)
     
     level_number = int(sys.argv[2])
     if not 1 <= level_number <= 25:
@@ -228,7 +242,7 @@ if __name__ == "__main__":
     
     level = dunjunz.Level(details["data"])
     
-    level_image = Image.new("P", (32 * 32, 48 * 24), 0)
+    level_image = Image.new("P", (32 * tile_size[0], 48 * tile_size[1]), 0)
     level_image.putpalette((0,0,0, 255,0,0, 0,255,0, 255,255,255))
     
     for row in range(48):
@@ -238,11 +252,11 @@ if __name__ == "__main__":
             image_name, extra = get_image_name(level, level_number, row, column)
             
             if image_name == level_number:
-                im = level.wall_sprite.image(size = (32, 24))
+                im = level.wall_sprite.image(size = tile_size)
             else:
-                im = sprites.sprites[image_name].image(size = (32, 24))
+                im = sprites.sprites[image_name].image(size = tile_size)
             
-            level_image.paste(im, (column * 32, row * 24))
+            level_image.paste(im, (column * tile_size[0], row * tile_size[1]))
             
     for row in range(48):
     
@@ -252,16 +266,34 @@ if __name__ == "__main__":
             
             if extra != None:
             
-                extra += 1
                 ox = -8
                 while extra > 0:
                     number_im = numbers[extra % 10]
                     ox -= number_im.size[0]
                     level_image.paste(number_im, (
-                        (column * 32) + im.size[0] + ox,
-                        (row * 24) + im.size[1] - number_im.size[1]/2))
+                        (column * tile_size[0]) + im.size[0] + ox,
+                        (row * tile_size[1]) + im.size[1] - number_im.size[1]/2))
                     
                     extra = extra / 10
+    
+    if scale != 1:
+        i = int(scale)
+        
+        if scale != i or scale < 1:
+            level_image = level_image.convert("RGB")
+        else:
+            while i & 1 == 0:
+                i = i >> 1
+            
+            # The lowest bit is 1. Remove it and check for other bits.
+            i = i >> 1
+            if i & 1 != 0:
+                # Not a multiple of 2, so convert the image to RGB format.
+                level_image = level_image.convert("RGB")
+        
+        level_image = level_image.resize((int(level_image.size[0] * scale),
+                                          int(level_image.size[1] * scale)),
+                                         Image.ANTIALIAS)
     
     level_image.save(output_file_name)
     

@@ -118,6 +118,8 @@ class Level:
             x = ord(data[0xa0 + i])
             y = ord(data[0xb5 + i])
             if x != 0xff and y != 0xff:
+                if (x, y) in self.keys:
+                    print "Replacing existing key", self.keys[(x, y)], "at", (x, y), "with", i
                 self.keys[(x, y)] = i
         
         self.trapdoors = set()
