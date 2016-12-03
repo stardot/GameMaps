@@ -133,19 +133,19 @@ raw_numbers = [
     "        "
     ]
 
-def get_image(level, sprites, row, column):
+def get_image(level, sprites, row, column, tile_size):
 
     tile = level.tiles[row][column]
     
     if column == level.player_x:
         if level.player_y <= row <= level.player_y + 1:
-            return sprites.sprites["player_left0"].image(size = (32, 24))
+            return sprites.sprites["player_left0"].image(size = tile_size)
     
     if tile == 0:
-        return level.wall_sprite.image(size = (32, 24))
+        return level.wall_sprite.image(size = tile_size)
     else:
         image_name, orientation = tile_map[tile]
-        im = sprites.sprites[image_name].image(size = (32, 24))
+        im = sprites.sprites[image_name].image(size = tile_size)
         if orientation & 1:
             im = im.transpose(Image.FLIP_LEFT_RIGHT)
         if orientation & 2:
@@ -155,10 +155,24 @@ def get_image(level, sprites, row, column):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 4:
+    if not 4 <= len(sys.argv) <= 5:
     
-        sys.stderr.write("Usage: %s <Icarus UEF file> <level> <output file name>\n" % sys.argv[0])
+        sys.stderr.write("Usage: %s <Icarus UEF file> <level> <output file name> [scale]\n" % sys.argv[0])
         sys.exit(1)
+    
+    elif len(sys.argv) == 5:
+        try:
+            scale = float(sys.argv[4])
+            if scale <= 0.0 or scale > 2.0:
+                raise ValueError
+        
+        except ValueError:
+            sys.stderr.write("Invalid scale specified. Must be 0.0 < scale <= 2.0.\n")
+            sys.exit(1)
+    else:
+        scale = 1
+    
+    tile_size = (32, 24)
     
     level_number = int(sys.argv[2])
     if not 1 <= level_number <= 20:
@@ -190,15 +204,15 @@ if __name__ == "__main__":
     
     level = icarus.Level(details["data"])
     
-    level_image = Image.new("P", (32 * 32, 32 * 24), 0)
+    level_image = Image.new("P", (32 * tile_size[0], 32 * tile_size[1]), 0)
     level_image.putpalette((0,0,0, 255,0,0, 255,255,255, 0,255,255))
     
     for row in range(32):
     
         for column in range(32):
         
-            im = get_image(level, sprites, row, column)
-            level_image.paste(im, (column * 32, row * 24))
+            im = get_image(level, sprites, row, column, tile_size)
+            level_image.paste(im, (column * tile_size[0], row * tile_size[1]))
     
     for row in range(32):
     
@@ -210,8 +224,27 @@ if __name__ == "__main__":
             
                 number_im = numbers[tile - 0xcf]
                 level_image.paste(number_im, (
-                    (column * 32) + im.size[0]/2 - number_im.size[0]/2,
-                    (row * 24) + im.size[1] - number_im.size[1]/2 - 2))
+                    (column * tile_size[0]) + im.size[0]/2 - number_im.size[0]/2,
+                    (row * tile_size[1]) + im.size[1] - number_im.size[1]/2 - 2))
+    
+    if scale != 1:
+        i = int(scale)
+        
+        if scale != i or scale < 1:
+            level_image = level_image.convert("RGB")
+        else:
+            while i & 1 == 0:
+                i = i >> 1
+            
+            # The lowest bit is 1. Remove it and check for other bits.
+            i = i >> 1
+            if i & 1 != 0:
+                # Not a multiple of 2, so convert the image to RGB format.
+                level_image = level_image.convert("RGB")
+        
+        level_image = level_image.resize((int(level_image.size[0] * scale),
+                                          int(level_image.size[1] * scale)),
+                                         Image.ANTIALIAS)
     
     level_image.save(output_file_name)
     
