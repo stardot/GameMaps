@@ -5,10 +5,12 @@ The Tools directory contains Python tools that extract images and maps from the
 data stored in a Universal Emulator Format (UEF) file. The tools are run from
 the command line from within the Dunjunz directory itself, like this:
 
+```
   PYTHONPATH=. ./Tools/imagemap.py Dunjunz_E.uef 1 /tmp/1.png
   PYTHONPATH=. ./Tools/htmlmap.py Dunjunz_E.uef 1 /tmp/level1
   PYTHONPATH=. ./Tools/textmap.py Dunjunz_E.uef 1
   PYTHONPATH=. ./Tools/read_sprites.py Dunjunz_E.uef /tmp/sprites
+```
 
 You will also need to provide a suitable Dunjunz_E.uef file containing the
 files for the Acorn Electron version of Dunjunz. This is not provided in this
