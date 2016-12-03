@@ -109,6 +109,8 @@ class Level:
             y = ord(data[0x75 + i])
             o = ord(data[0x8a + i])
             if x != 0xff and y != 0xff and o != 0xff:
+                if (x, y) in self.doors:
+                    print "Replacing existing door", self.doors[(x, y)][0], "at", (x, y), "with", i
                 self.doors[(x, y)] = (i, o)
         
         self.keys = {}
