@@ -78,7 +78,9 @@ if __name__ == "__main__":
             
             elif level.is_solid(row, column):
                 if (column, row) in level.doors:
-                    n, o = level.doors[(column, row)]
+                    doors = level.doors[(column, row)]
+                    # Just use the appropriate sprite for the first door found.
+                    n, o = doors[0]
                     if o == 0x1d:
                         sys.stdout.write("-")
                     else:
@@ -86,12 +88,12 @@ if __name__ == "__main__":
                 else:
                     sys.stdout.write("#")
             
-            elif level.is_collectable(row, column) and \
-                 (column, row) in level.lookup:
-            
-                t = level.lookup[(column, row)]
-                sys.stdout.write(type_map[t])
-            
+            elif level.is_collectable(row, column):
+                if (column, row) in level.lookup:
+                    t = level.lookup[(column, row)]
+                    sys.stdout.write(type_map[t])
+                else:
+                    sys.stdout.write("!")
             else:
                 sys.stdout.write(" ")
         

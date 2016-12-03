@@ -109,9 +109,7 @@ class Level:
             y = ord(data[0x75 + i])
             o = ord(data[0x8a + i])
             if x != 0xff and y != 0xff and o != 0xff:
-                if (x, y) in self.doors:
-                    print "Replacing existing door", self.doors[(x, y)][0], "at", (x, y), "with", i
-                self.doors[(x, y)] = (i, o)
+                self.doors.setdefault((x, y), []).append((i, o))
         
         self.keys = {}
         
@@ -120,9 +118,7 @@ class Level:
             x = ord(data[0xa0 + i])
             y = ord(data[0xb5 + i])
             if x != 0xff and y != 0xff:
-                if (x, y) in self.keys:
-                    print "Replacing existing key", self.keys[(x, y)], "at", (x, y), "with", i
-                self.keys[(x, y)] = i
+                self.keys.setdefault((x, y), []).append(i)
         
         self.trapdoors = set()
         

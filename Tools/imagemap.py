@@ -50,19 +50,21 @@ def get_image_name(level, level_number, row, column):
         return "fighter_left1", None
     
     elif (column, row) in level.keys:
-        n = level.keys[(column, row)]
-        return "key", n
+        keys = level.keys[(column, row)]
+        return "key", keys
     
     elif (column, row) in level.trapdoors:
         return "trapdoor", None
     
     elif level.is_solid(row, column):
         if (column, row) in level.doors:
-            n, o = level.doors[(column, row)]
+            doors = level.doors[(column, row)]
+            # Just use the appropriate sprite for the first door found.
+            n, o = doors[0]
             if o == 0x1d:
-                return "v_door", n
+                return "v_door", map(lambda (n, o): n, doors)
             else:
-                return "h_door", n
+                return "h_door", map(lambda (n, o): n, doors)
         else:
             return level_number, None
     
@@ -71,7 +73,7 @@ def get_image_name(level, level_number, row, column):
     
         name = type_map[level.lookup[(column, row)]]
         if name == "teleport":
-            return name, level.teleporters.index((column, row)) + 1
+            return name, [level.teleporters.index((column, row)) + 1]
         else:
             return name, None
     
@@ -266,15 +268,22 @@ if __name__ == "__main__":
             
             if extra != None:
             
-                ox = -8
-                while extra > 0:
-                    number_im = numbers[extra % 10]
-                    ox -= number_im.size[0]
-                    level_image.paste(number_im, (
-                        (column * tile_size[0]) + im.size[0] + ox,
-                        (row * tile_size[1]) + im.size[1] - number_im.size[1]/2))
+                bx = -8
+                
+                for n in extra:
+                
+                    ox = bx
                     
-                    extra = extra / 10
+                    while n > 0:
+                        number_im = numbers[n % 10]
+                        ox -= number_im.size[0]
+                        level_image.paste(number_im, (
+                            (column * tile_size[0]) + im.size[0] + ox,
+                            (row * tile_size[1]) + im.size[1] - number_im.size[1]/2))
+                        
+                        n = n / 10
+                    
+                    bx += 20
     
     if scale != 1:
         i = int(scale)

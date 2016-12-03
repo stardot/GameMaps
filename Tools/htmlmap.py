@@ -49,19 +49,21 @@ def get_image_name(level, level_number, row, column):
         return "fighter_left1", "Fighter"
     
     elif (column, row) in level.keys:
-        n = level.keys[(column, row)]
-        return "key", n
+        keys = level.keys[(column, row)]
+        return "key", keys
     
     elif (column, row) in level.trapdoors:
         return "trapdoor", "trapdoor"
     
     elif level.is_solid(row, column):
         if (column, row) in level.doors:
-            n, o = level.doors[(column, row)]
+            doors = level.doors[(column, row)]
+            # Just use the appropriate sprite for the first door found.
+            n, o = doors[0]
             if o == 0x1d:
-                return "v_door", n
+                return "v_door", map(lambda (n, o): n, doors)
             else:
-                return "h_door", n
+                return "h_door", map(lambda (n, o): n, doors)
         else:
             return "%02i" % level_number, None
     
@@ -70,7 +72,7 @@ def get_image_name(level, level_number, row, column):
     
         name = type_map[level.lookup[(column, row)]]
         if name == "teleport":
-            return name, level.teleporters.index((column, row))
+            return name, [level.teleporters.index((column, row))]
         else:
             return name, None
     
@@ -123,7 +125,7 @@ if __name__ == "__main__":
         
             image_name, extra = get_image_name(level, level_number, row, column)
             if extra != None:
-                f.write('<td><img src="%s.png" alt="%s" /></td>\n' % (image_name, extra))
+                f.write('<td><img src="%s.png" alt="%s" /></td>\n' % (image_name, ",".join(map(str, extra))))
             else:
                 f.write('<td><img src="%s.png" /></td>\n' % image_name)
         
