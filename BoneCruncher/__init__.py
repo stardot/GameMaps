@@ -34,14 +34,14 @@ class BoneCruncher:
     tile_width = 16
     tile_height = 32
     
-    order = ["BONE_2", "SCREEN 1", "SCREEN 2", "SCREEN 3", "SCREEN 4"]
-    lengths = {"BONE_2": 0x5b88,
+    order = ["Bone_2", "SCREEN 1", "SCREEN 2", "SCREEN 3", "SCREEN 4"]
+    lengths = {"Bone_2": 0x5b88,
                "SCREEN 1": 0xc00,
                "SCREEN 2": 0xc00,
                "SCREEN 3": 0xc00,
                "SCREEN 4": 0xc00}
     
-    data_offsets = {"BONE_2": 0x2500,
+    data_offsets = {"Bone_2": 0x2500,
                     "SCREEN 1": 0,
                     "SCREEN 2": 0,
                     "SCREEN 3": 0,
@@ -68,8 +68,8 @@ class BoneCruncher:
             
             file_number += 1
         
-        if len(self.files) != 5:
-            raise NotFound
+        #if len(self.files) != 5:
+        #    raise NotFound
     
     def read_levels(self):
     
@@ -169,7 +169,7 @@ class BoneCruncher:
     
     def read_sprites(self):
     
-        reader = Reader(self.data["BONE_2"][0x0:0x1400])
+        reader = Reader(self.data["Bone_2"][0x0:0x1400])
         
         sprites = {}
         
@@ -204,7 +204,7 @@ class BoneCruncher:
         current = ""
         while len(passwords) < 24 and p < 0x2500:
         
-            c = self.data["BONE_2"][p]
+            c = self.data["Bone_2"][p]
             if c == "\xff":
                 if current != "":
                     passwords.insert(0, current)
@@ -258,7 +258,7 @@ class BoneCruncher:
             # Truncate the data if necessary.
             data = data[:0xf8]
         
-        file_number = self.files["BONE_2"]
+        file_number = self.files["Bone_2"]
         old_data = self.uef.contents[file_number]["data"]
         self.uef.contents[file_number]["data"] = old_data[:0x2408] + data + old_data[0x2500:]
     
