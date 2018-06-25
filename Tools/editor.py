@@ -331,8 +331,8 @@ class EditorWindow(QMainWindow):
         else:
             password_number = number - 1
         
-        self.passwordEdit.setText(self.levelWidget.passwords[password_number % 24])
         self.setLevel(number)
+        self.passwordEdit.setText(self.levelWidget.passwords[password_number % 24])
     
     def setLevel(self, number):
     
@@ -355,7 +355,12 @@ class EditorWindow(QMainWindow):
     
     def updatePassword(self, text):
     
-        self.levelWidget.passwords[self.levelWidget.level_number - 1] = str(text)
+        number = self.levelWidget.level_number - 1
+        
+        if number > 5:
+            number -= 6
+        
+        self.levelWidget.passwords[number] = str(text)
     
     def sizeHint(self):
     
