@@ -1,5 +1,5 @@
-# GameMaps
-Maps for BBC Micro Games, contributed by [David Boddie](https://github.com/dboddie).
+# BBC Micro Game Map Tools
+Map tools for BBC Micro Games, contributed by [David Boddie](https://github.com/dboddie).
 
 - [Bone Cruncher](https://github.com/stardot/GameMaps/tree/main/BoneCruncherMaps)
 - [Clogger](https://github.com/stardot/GameMaps/tree/main/CloggerMaps)
