@@ -3,7 +3,7 @@ Map tools for BBC Micro Games, contributed by [David Boddie](https://github.com/
 
 - [Bone Cruncher](https://github.com/stardot/GameMaps/tree/main/BoneCruncherMaps)
 - [Clogger](https://github.com/stardot/GameMaps/tree/main/CloggerMaps)
-- [Dunjunz](https://github.com/stardot/GameMaps/tree/main/DunkunzMaps)
+- [Dunjunz](https://github.com/stardot/GameMaps/tree/main/DunjunzMaps)
 - [Firetrack](https://github.com/stardot/GameMaps/tree/main/FiretrackMaps)
 - [Icarus](https://github.com/stardot/GameMaps/tree/main/IcarusMaps)
 - [Moon Raider](https://github.com/stardot/GameMaps/tree/main/MoonMap)
