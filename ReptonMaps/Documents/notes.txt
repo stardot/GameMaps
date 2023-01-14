@@ -1,0 +1,333 @@
+Repton (Electron Version)
+=========================
+
+Repton levels appear to be maps of 32 row by 32 columns.
+
+The level data was found by loading the REPTON2 file into memory in MODE 5
+and visually inspecting the data. The assumption was that level data follows
+the sprite data.
+
+Level data seems to start at 0x2c00.
+
+Setting the lowest 4 bits of the first byte in the first level to 0 results
+in a blank cell; setting it to 1 results in a diamond.
+
+Setting the highest 4 bits of the first byte to 0 produces something other
+than a blank space.
+
+Setting multiple bytes to 0 results in a group of blank cells followed by
+a teleporter-style cell - the type of cell used for teleporters in Repton 2.
+
+Each row of the level appears to be 20 bytes long. This may mean that each
+cell is stored in 5 bits.
+
+
+After some experimentation and reading of levels, this is the mapping between
+values and cell types:
+
+     0: space
+     1: diamond
+     2: boulder
+     3: egg
+     4: key
+     5: earth
+     6: earth
+     7: earth
+     8: safe
+     9: brick wall
+    10: double (top/bottom) wall
+    11: double (left/right) wall
+    12: quadruple wall
+    13: fancy wall
+    14: smooth wall
+    15: lower edged smooth wall
+    16: upper edged smooth wall
+    17: right edged smooth wall
+    18: left edged smooth wall
+    19: lower right curved smooth wall
+    20: lower left curved smooth wall
+    21: upper right curved smooth wall
+    22: upper left curved smooth wall
+    23: map
+    24: lower edged brick wall
+    25: upper edged brick wall
+    26: right edged brick wall
+    27: left edged brick wall
+    28: lower right curved brick wall
+    29: lower left curved brick wall
+    30: upper right curved brick wall
+    31: upper left curved brick wall
+
+Sprites are stored at 0x2500 in the REPTON2 file and are 8 by 16 pixels. See
+the table in the sprites module of the Repton package for the offsets into the
+sprite data.
+
+Repton (BBC Micro Version)
+==========================
+
+Cassette: The last part of the REPTON2 file, from 0x5300 to 0x55ff, is the
+same as in the Electron version, from 0x4700 to 0x49ff.
+
+DFS disk: The D.REPTON2 file contains the level data from 0x3800 onwards.
+
+
+Repton2 (Electron Version)
+==========================
+
+Repton 2 levels appear to start at 0x2e00 and encode the data in rows of 20
+bytes (5 bits per cell again).
+
+Because the top row of Screen A is a single wall with two openings at the ends,
+it is clear to see that values of 0x1f (31) are solid wall pieces and that
+blank cells are 0x00 (0).
+
+The top of Screen B appears to start at 0x2fe0. Screen A is only 24 rows high.
+Many other screens are 32 rows high.
+
+Screen C is 24 rows high.
+
+
+Sprites appear to start at 0x2340.
+
+Spirits are 4 by 8 pixels.
+Other sprites are 12 by 24 pixels.
+
+Text characters start at 0x2040.
+Code appears to end at 0x1aff.
+
+Level data
+==========
+
+Writing zero bytes into the file from 0x2001 to 0x203f results in a corrupted
+Screen A and a topmost transporter that sends Repton to the leftmost skull
+chamber with the palette for the level that should have been entered. This
+means that the palette data is probably stored separately.
+
+The first two bytes (0x2000, 0x2001) seem to control the displacement of the
+Screen A data. The following bytes seem to control transporter destinations.
+
+Byte 0x2028 appears to control the destination of the topmost transporter.
+Byte 0x202c appears to control the transporter one square down and to the left
+of it.
+Byte 0x2004 appears to control the transporter to Screen B (below the first
+boulder trap on the right of Screen A).
+
+Bytes 0x2004 and 0x2005 control different aspects of the transportation. It
+seems like the first byte controls what is copied into the top eight rows of
+the level buffer, and the second byte controls some of the rows beneath.
+
+It appears that each set of four bytes, from 0x2000 to 0x203f, contain four
+indices into the level data which each refer to eight rows of level data.
+The special index, 0x80, is the empty space at the bottom of Screen A.
+
+By inspecting the 64 bytes of level data and comparing them to the maps on the
+Stairway to Hell site, values of 0x80 and above appear to be placeholders for
+eight rows that contain a single type of tile. So, 0x80 is eight rows of empty
+space, 0x86 must be diamonds (as used in Screen P), and 0x83 has been tested to
+be earth.
+
+Transporters and puzzle pieces
+==============================
+
+Blanking the bytes from 0x1e50 to 0x1e8f results in a missing transporter in
+the cluster under the key on Screen A.
+
+Blanking the bytes from 0x1e00 to 0x1e3f results in missing puzzle pieces above
+the skulls on Screen A.
+
+Blanking the bytes from 0x1da0 to 0x1ddf results in a missing puzzle piece at
+the top-left of Screen B. The first three bytes (01 02 06) appear to reference
+the piece at x=2, y=6 where the first byte is the screen number (Screen B).
+
+Each block of four bytes contains a screen number, x and y coordinates and
+possibly a reference to the specific piece at that location. It appears that
+the final number is the piece's location in the display area on Screen A.
+
+At 0x1e50, the four bytes (00 00 08 0D) appear to represent screen number,
+x and y coordinates and screen number for the transporter destination. The
+following two bytes (1E 17) are the x and y coordinates of the transporter
+destination.
+
+The next entry appears at 0x1e56 (00 00 12 0B 11 18) which would indicate a
+transporter at x=0, y=18 on Screen A with a destination on Screen L at x=17,
+y=24. However, row 24 appears to be part of a placeholder block of eight
+decorative wall rows, so the y coordinate appears to only take ordinary map
+rows into account.
+
+The end of the transporter definitions appears to be at 0x1fcf. There are zero
+bytes from 0x1fd0 to 0x1fff.
+
+Although transporters and transporter destinations are defined in the level
+data, it seems that they are only there as placeholders to reserve space.
+
+Puzzle piece sprites
+--------------------
+
+Since the puzzle piece locations are defined from 0x1da0 to 0x1e4f, there would
+appear to be 44 of them. However, there are two incompletely defined entries
+at 0x1e48 and 0x1e4c. In the area from 0x1c20 to 0x1d9f, there are lots of
+similar bytes. Changing the first 9 to the same byte results in a redefined
+puzzle piece shape for the first puzzle piece (on Screen B). The values in this
+area refer to the puzzle piece sprites and are given as offsets from the start
+of the sprite area (0x50 to 0x60).
+
+Note that 42 * 9 = 378 and that the area from 0x1c20 and 0x1d9f accommodates
+this number of bytes with six bytes to spare at the end.
+
+Tile sprites
+============
+
+Since the puzzle pieces seem to be defined completely in the area described
+then it is worth finding out where the other tile sprites are stored. Since
+there are 32 of them, 32 * 9 = 288 (0x1c0), we can look for similar definitions
+earlier in the file, possible from 0x1b00 to 0x1c1f.
+
+This appears to work well, except that the transporter sprite is defined as
+tile 11 and tile 2 is used to represent transporters in the level data.
+
+Totals
+======
+
+The total number of earth tiles is stored in two bytes at 0x102f and 0x1034 as
+part of a routine. The values are encoded as binary coded decimal with the
+lowest first.
+
+The total number of diamonds is stored in 0x1025 and 0x102a.
+Total monsters is at 0x1020, transporters at 0x0164, puzzle pieces at 0x132.
+
+The monsters, earth and diamonds totals are stored in locations from 0x0be0 to
+0x0be4.
+
+Looking at the code from 0x132 to 0x14b, it appears that the running total for
+the puzzle pieces is stored at 0x0b81. Similarly, at 0x18b, the running total
+for the transporters is stored at 0x0b80.
+
+Start position
+==============
+
+This is stored at 0x1060 (x) and 0x1064 (y).
+
+Skulls
+======
+
+The skulls at the top of Screen A disappear when certain totals reach zero and
+Repton visits the status character. The first skull and its counterpart below
+disappear when all monsters have been killed, the second when all diamonds are
+collected, the third when all earth is collected, the fourth when all
+transporters have been used, and the fifth when there is only one puzzle piece
+left to collect.
+
+The start of the file appears to contain code to check the values from 0x0be0
+to 0x0be4 (the monsters, earth and diamonds totals). The code at 0x132 which
+includes the puzzle piece total, appears to read the table at 0x1da0 (0x29a0).
+
+Later, at 0x19c, the totals are checked and a value of 2 written to the
+addresses, 0x421, 0x4a1, 0x423, 0x4a3, 0x424 and 0x4a5.
+
+The puzzle piece and transporter totals are checked at 0x1cd and 0x1dc, and
+a value of 2 written to 0x429, 0x4a9, 0x427 and 0x4a7 as a result.
+
+This may mean that the working level, or persistent Screen A, is stored at
+0x420 or thereabouts.
+
+Score
+=====
+
+Diamond         6
+Earth   (cross) 3
+        (tl/br) 4
+        (tr/bl) 5
+Monster         0
+Transporter     0
+Puzzle piece    0
+
+Palette
+=======
+
+At 0x394, there is the start of a VDU 19 sequence. This appears to split bytes
+obtained from zero page into the two logical and physical colour values, with
+the top four bits as the logical value and the lower four as the physical value.
+
+The subroutine appears to start at 0x392:
+
+    sta $00         ; 85 00
+    lda #$13        ; A9 13
+    jsr $ffee       ; 20 EE FF      ; VDU 19,
+    lda $00         ; A5 00
+    lsr lsr lsr lsr ; 4A 4A 4A 4A
+    jsr $ffee       ; 20 EE FF      ; l,
+    lda $00         ; A5 00
+    and $0f         ; 29 0F
+    jsr $ffee       ; 20 EE FF      ; p,
+    lda #0          ; A9 00
+    jsr $ffee       ; 20 EE FF      ; 0,
+    jsr $ffee       ; 20 EE FF      ; 0
+    jmp $ffee       ; 4C EE FF      ; 0 (and return via VDU)
+
+The routine is located in the Electron's memory at 0xc00 + 0x392 = 0xf92. This
+is called from 0x100e (0x1c0e) and 0x1074 (0x1c74).
+
+The call at 0x100e sets the third colour to green (2) when the game loads.
+The call at 0x1074 sets it when the game starts.
+
+There are calls at 0x2888 and 0x2894, which appear to set two colours using the
+routine at 0x392 (0xf92). The routine starting at 0x2888 (0x3488) is called
+from 0x107f. The code leading up to this is mentioned above (setting colour 3)
+and is followed by
+
+    lda $8b         ; A5 8B
+    and #$03        ; 29 03
+    tax             ; AA
+    lda $0f43,x     ; BD 43 0F  ; loads the value from 0x343 (0xf43)
+    jsr $3488       ; 20 88 34  ; jumps to the routine at 0x2888 (0x3488)
+
+The routine at 0x2888 is:
+
+    jsr $0f92       ; 20 92 0F
+    ldx $a6         ; A6 8B
+    cpx #$02        ; E0 02
+    bcs #$06        ; B0 06     -> rts
+    lda $35c0,x     ; BD C0 35  ; 0x29c0 (0x35c0)
+    jsr $0f92       ; 20 92 0F
+    rts             ; 60
+
+At 0x29c0, there are some two values which are followed by a routine starting
+at 0x29c2. These two values appear to control the colours of the first two
+screens.
+
+Memory layout
+=============
+
+Offsets             Description
+0x1da0-0x1e47       Puzzle piece locations
+0x1e50-0x1fcf       Transporter definitions
+0x1fd0-0x1fff       ...
+0x2000-0x203f       Screen area definitions
+0x2040-0x233f       Text character sprite definitions
+0x2340-0x273f       Game sprites
+0x2740-0x2757       ?
+0x2758-0x287f       Game sprites
+0x2880-0x2897       ?
+0x2898-0x29bf       Game sprites
+0x29c0-0x29d7       ?
+0x29d8-0x2a87       Game sprites
+0x2a88-0x2a97       ?
+0x2a98-0x2dff       Game sprites
+0x2e00-0x4bff       Level definitions
+
+Repton 2 (BBC Micro DFS Version)
+================================
+
+Loading the D.REPB file into screen memory, it seems that the sprites finish at
+offset 0x3500. Seeing a span of values similar to those at 0x2e00 in the
+Electron version, and using EOR to compare what seem to be equivalent values,
+it appears that each byte in the file is encoded with EOR 0x66.
+
+We look for equivalent spans of values to those in the above table in order to
+identify the equivalent areas in the file.
+
+0x1b00-0x1b3f       Screen area definitions
+0x1b40-0x1cbf       Transporter definitions
+0x1cf8-0x1d9f       Puzzle piece locations
+
+0x3500-0x52ff       Level definitions
