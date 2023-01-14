@@ -1,0 +1,267 @@
+.org $1900
+plot:
+        ldy #31
+loop:
+        lda ($70),y
+        sta ($72),y
+        dey
+        bpl loop
+        rts
+
+plot64:
+        jsr plot
+
+        lda $70
+        adc #32
+        sta $70
+        lda $71
+        adc #0
+        sta $71
+
+        lda $72
+        adc #$80
+        sta $72
+        lda $73
+        adc #$02
+        sta $73
+        jsr plot
+
+        rts
+
+inittiles:
+        lda #0
+        sta $70
+        lda #$6c
+        sta $71
+        lda #$80
+        sta $72
+        lda #$6e
+        sta $73
+        jsr plot
+        lda #$a0
+        sta $72
+        lda #$6e
+        sta $73
+        jsr plot
+        lda #$00
+        sta $72
+        lda #$70
+        sta $73
+        jsr plot
+        lda #$20
+        sta $72
+        lda #$70
+        sta $73
+        jsr plot
+        rts
+
+plottile:           ; $70=tile number
+                    ; $74,$75=sprite area address
+                    ; $78,$79=screen address
+        lda #0
+        sta $71
+        lda $70
+        and #$0c
+        ror
+        ror
+        sta $71
+        lda $70
+        and #$03
+        ror
+        ror
+        ror
+        adc $74
+        sta $70
+        lda $71
+        adc $75     ; add the carry bit to the top byte of the sprite address
+        sta $71
+
+        lda $78     ; load the screen address into $72,$73
+        sta $72
+        lda $79
+        sta $73
+        jsr plot64
+
+        rts
+
+plotmap:            ; $74,$75=sprite area address
+                    ; $76,$77=offset into level (multiple of 12 bytes)
+
+        lda #$00
+        sta $7a     ; screen address
+        lda #$30
+        sta $7b
+
+columnloop:
+        clc
+        lda $7a
+        sta $78
+        lda $7b
+        sta $79
+        lda #0      ; row counter
+        sta $7c
+
+rowloop:
+        ; plot the left tile
+
+        lda $7c
+        tay
+        lda ($76),Y ; load tile numbers
+        and #$0f
+        sta $70
+        jsr plottile
+
+        ; plot the right tile
+
+        clc
+        lda $7c
+        tay
+        lda ($76),Y ; load tile numbers
+        and #$f0
+        rol
+        rol
+        rol
+        rol
+        rol
+        clc
+        sta $70
+
+        lda $78
+        adc #$20
+        sta $78
+        lda $79
+        adc #0
+        sta $79
+        jsr plottile
+
+        lda $78
+        adc #$e0
+        sta $78
+        lda $79
+        adc #$04
+        sta $79
+
+        lda $7c
+        adc #1
+        cmp #12
+        beq nextcolumn
+        sta $7c
+        jmp rowloop
+
+nextcolumn:
+        clc
+        lda $76
+        adc #12
+        sta $76
+        lda $77
+        adc #0
+        sta $77
+
+        lda $7a
+        adc #$40
+        sta $7a
+        lda $7b
+        adc #0
+        sta $7b
+
+        lda $7a
+        cmp #$80
+        bne columnloop
+        lda $7b
+        cmp #$32
+        bne columnloop
+
+        rts
+
+eorplot:
+        ldy #31
+eorloop:
+        lda ($70),y
+        eor #255
+        sta ($70),y
+        dey
+        bpl eorloop
+        rts
+
+eorplot64:
+        jsr eorplot
+
+        lda $70
+        adc #$80
+        sta $70
+        lda $71
+        adc #$02
+        sta $71
+        jsr eorplot
+
+        rts
+
+wipelevel:
+        ; $70,$71=level address
+        lda $70
+        adc #$08
+        sta $72
+        lda $71
+        adc #$04
+        sta $73
+        ldy #0
+
+wipeloop:
+        lda #0
+        sta ($70),Y
+        lda $70
+        adc #1
+        sta $70
+        lda $71
+        adc #0
+        sta $71
+
+        lda $71
+        cmp $73
+        bne wipeloop
+        lda $70
+        cmp $72
+        bne wipeloop
+
+        rts
+
+transform:
+
+        ldy #0
+transformloop:
+
+        ldx #7
+transformloop1:
+        lda ($70),y
+        sta ($72),y
+        iny
+        dex
+        bpl transformloop1
+
+        lda $72
+        adc #24
+        sta $72
+        lda $73
+        adc #0
+        sta $73
+
+        ldx #7
+transformloop2:
+        lda ($70),y
+        sta ($72),y
+        iny
+        dex
+        bpl transformloop2
+
+        lda $72
+        sec
+        sbc #32
+        sta $72
+        lda $73
+        sbc #0
+        sta $73
+
+        cpy #64
+        bmi transformloop
+
+        rts

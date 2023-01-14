@@ -1,0 +1,18 @@
+AUTO
+CLS
+PRINT "1) Load editor"
+PRINT "2) Run game"
+PRINT "3) Patch and run game"
+
+REPEAT
+A%=GET
+IF A%=49 CHAIN "EDITOR"
+IF A%=50 CHAIN "LOADER"
+UNTIL A%=51
+
+OSCLI("CAT")
+INPUT "Use maps:" f$
+OSCLI("LOAD CODE 2000")
+OSCLI("LOAD "+f$+" 4BE0")
+OSCLI("SAVE CODE 2000 5C00 2000")
+CHAIN "LOADER"

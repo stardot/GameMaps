@@ -1,0 +1,10 @@
+Editor keys
+
+Z X : /     left, right, up, down
+. ,         scroll level left, right
+0-9 A-F     set tile at the current position and set the current tile
+Return      set tile at the current position using the current tile
+F1 F2 F3    select level 1, 2, 3
+S           save levels
+L           load levels
+W           wipe the current level

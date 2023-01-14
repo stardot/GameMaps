@@ -1,0 +1,124 @@
+AUTO
+MODE 2
+HIMEM=&2300
+VDU 23,1,0;0;0;0;
+VDU 28,0,30,19,26
+*FX 4,1
+*FX 225,32
+PROCinit
+PROCtake_data
+VDU 28,0,23,19,0
+CLS
+level%=0
+PROCinitlevel
+column%=0
+x%=0
+y%=0
+r%=1
+c%=0
+REPEAT
+IF r% PROCplotmap:PROCeorplot
+r%=0
+IF INKEY(-103) column%=column%-5:r%=1
+IF INKEY(-104) column%=column%+5:r%=1
+IF INKEY(-98) AND x%>0 PROCeorplot:x%=x%-1:PROCeorplot
+IF INKEY(-67) AND x%<19 PROCeorplot:x%=x%+1:PROCeorplot
+IF INKEY(-73) AND y%>0 PROCeorplot:y%=y%-1:PROCeorplot
+IF INKEY(-105) AND y%<11 PROCeorplot:y%=y%+1:PROCeorplot
+IF INKEY(-74) PROCeorplot:PROCsettile(c%):PROCeorplot
+IF INKEY(-34) PROCwipe:r%=1
+IF INKEY(-87) PROCload:r%=1
+IF INKEY(-82) PROCsave:r%=1
+IF column%<0 column%=0
+IF column%>76 column%=76
+key%=INKEY(0)
+IF key%>47 AND key%<58 c%=key%-48:PROCeorplot:PROCsettile(c%):PROCeorplot
+IF key%>64 AND key%<71 c%=key%-55:PROCeorplot:PROCsettile(c%):PROCeorplot
+IF key%=33 level%=0:PROCinitlevel:r%=1
+IF key%=34 level%=1:PROCinitlevel:r%=1
+IF key%=35 level%=2:PROCinitlevel:r%=1
+UNTIL FALSE
+END
+
+DEF PROCinit
+OSCLI("LOAD EDCODE 1900")
+ENDPROC
+
+DEF PROCinitlevel
+VDU19,12,1,0,0,0
+VDU19,13,1,0,0,0
+IF level%=0 THEN VDU19,1,5,0,0,0:VDU19,2,2,0,0,0:VDU19,3,3,0,0,0:VDU19,4,2,0,0,0:VDU19,6,3,0,0,0
+IF level%=1 THEN VDU19,1,5,0,0,0:VDU19,2,4,0,0,0:VDU19,3,6,0,0,0:VDU19,4,2,0,0,0
+IF level%=2 THEN VDU19,1,5,0,0,0:VDU19,2,3,0,0,0:VDU19,3,7,0,0,0:VDU19,4,2,0,0,0
+ENDPROC
+
+DEF PROCtake_data
+ADDR% = &3000
+OSCLI("LOAD CODE "+STR$~(ADDR%))
+CLS
+FOR A%=0 TO 31
+!&70=&4D00+(A%*32)
+!&72=&6C00+(A%*32)
+CALL &1900
+!&70=&5100+(A%*32)
+!&72=&7000+(A%*32)
+CALL &1900
+!&70=&3000+(A%*32)
+!&72=&7400+(A%*32)
+CALL &1900
+NEXT
+FOR A%=0 TO &C00 STEP 32
+!&70=&5BE0+A%
+!&72=&23E8+A%
+CALL &1900
+NEXT
+FOR A%=&C00 TO &C18 STEP 2
+!(&23E8+A%)=!(&5BE0+A%)
+NEXT
+CALL &1929
+ENDPROC
+
+DEF PROCplotmap
+!&74 = &6C00 + (level% * &400)
+!&76 = &23E8 + (level% * &408) + (column% * 12)
+CALL &1987
+ENDPROC
+
+DEF PROCeorplot
+!&70=&3000+(y%*&500)+(x%*32)
+CALL &1A12
+ENDPROC
+
+DEF PROCsettile(t%)
+addr%=&23E8 + (level% * &408) + ((column% + (x% DIV 2)) * 12) + y%
+old%=?addr%
+IF x% MOD 2 = 0 THEN ?addr%=(old% AND 240) OR t% ELSE ?addr%=(old% AND 15) OR t%*16
+!&70=&6C00+(level%*&400)+(t%*64)
+!&72=&3000+(y%*&500)+(x%*32)
+CALL &190A
+ENDPROC
+
+DEF PROCload
+CLS
+OSCLI("CAT")
+*FX21,0
+INPUT "Load maps:" f$
+OSCLI("LOAD "+f$+" 23E8")
+ENDPROC
+
+DEF PROCsave
+CLS
+OSCLI("CAT")
+*FX21,0
+INPUT "Save as:" f$
+OSCLI("SAVE "+f$+" 23E8 3000")
+ENDPROC
+
+DEF PROCwipe
+CLS
+PRINT "Wipe level? (y/n)"
+*FX21,0
+IF GET<>89 ENDPROC
+!&70=&23E8+(level%*&408)
+CALL &1A25
+ENDPROC
