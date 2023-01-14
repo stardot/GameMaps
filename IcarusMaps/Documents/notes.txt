@@ -1,0 +1,71 @@
+Each level map is stored in a file, from "DECKB" to "DECKT" except for the
+first level, which is stored at the start of the "Prog2" file.
+
+The levels in separate files are scrambled using a counter that starts with a
+value of 1 and increases for each byte read, wrapping around after 255 to 0.
+The counter value is combined with each byte from the file using an EOR
+operation.
+
+It is difficult to modify the game by creating a new UEF file because the
+UEFfile module does not preserve the block headers in data chunks from the
+original Icarus.uef file when it writes extracted files to a new UEF file.
+The "Game" and "Icarus" files are locked, and the "Game" file appears to rely
+on a value stored in the "next address" block header. Applying an EOR 0xa5
+operation to the file unscrambles it, but how this is obtained from the header,
+and whether the locked bit influences that process is unknown.
+
+In the running game, the code at 0x24a4 (0x16a4 in the Icarus file) is
+responsible for loading the next level and calling the routine to unscramble
+the data:
+
+    24A4 : LDX #D1     
+    24A6 : LDY #24     ; refers to the text "L. DECKB 3000" when initialised
+    24A8 : JSR FFF7    
+    24AB : JSR 067B    
+
+The unscrambling routine is written to the memory at 0x67b after the game
+starts, but when the next level is loaded, it contains the following code:
+
+    067B : LDA #00     
+    067D : STA 70      
+    067F : LDA #30     
+    0681 : STA 71      
+    0683 : LDA #00     
+    0685 : STA 72      
+    0687 : STA 73      
+    0689 : TAY         
+    068A : TAX         
+    068B : INX         
+    068C : STX 72      
+    068E : LDA (70),Y  
+    0690 : EOR 72      
+    0692 : STA (70),Y  
+    0694 : CLC         
+    0695 : ADC 73      
+    0697 : STA 73      
+    0699 : INC 70      
+    069B : BNE 069F    
+    069D : INC 71      
+    069F : LDA 70      
+    06A1 : CMP #3C     
+    06A3 : BNE 068B    
+    06A5 : LDA 71      
+    06A7 : CMP #34     ; loop until address == 0x343c
+    06A9 : BNE 068B    
+    06AB : LDX 0CE4    ; level number
+    06AE : LDA 73      ; load total
+    06B0 : CMP 06E0,X  ; compare with checksum value
+    06B3 : BEQ 06CB    ; branch to end of subroutine if equal
+    06B5 : LDA #00     
+    06B7 : STA 70      
+    06B9 : LDA #30     
+    06BB : STA 71      
+    06BD : LDA #FF     
+    06BF : STA (70),Y  
+    06C1 : INC 70      
+    06C3 : BNE 06C7    
+    06C5 : INC 71      
+    06C7 : BNE 06BD    
+    06C9 : BEQ 06BD    
+    06CB : RTS         
+
